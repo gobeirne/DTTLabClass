@@ -447,13 +447,13 @@ body {
     font-size: 0.7rem;
   }
 
-  /* Sens/Spec/Acc row: 3-col grid on mobile */
-  .sens-spec-grid {
+  /* Sens/Spec/Acc row: 3-col grid on mobile (only when visible) */
+  .sens-spec-grid.show-grid {
     display: grid !important;
     grid-template-columns: 1fr 1fr 1fr;
     gap: 8px;
   }
-  .sens-spec-grid .stat-card {
+  .sens-spec-grid.show-grid .stat-card {
     min-width: unset;
     padding: 8px 6px;
   }
@@ -1657,6 +1657,7 @@ window.showSec9c = function() {
   // Reveal the sens/spec/accuracy stats inline in 9b
   const statsEl = document.getElementById('quad-sens-spec-stats');
   statsEl.style.display = 'flex';
+  statsEl.classList.add('show-grid');
   // Add a nudge to go back and play
   if (!document.getElementById('play-nudge')) {
     const nudge = document.createElement('p');
