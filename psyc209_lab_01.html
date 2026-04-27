@@ -831,7 +831,7 @@ body {
         <div class="chart-wrap"><canvas id="chart-adaptive"></canvas></div>
 
         <h3>Trial-by-Trial Data</h3>
-        <p>The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. Your SRT is the average of the signal levels from trial 8 onward.</p>
+        <p>The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. Your SRT is the average of the signal levels from trials 8 through 26.</p>
         <div style="overflow-x:auto;">
           <table class="trial-table" id="trial-table">
             <thead>
@@ -1534,9 +1534,9 @@ function parseAndDisplay(csvText, fileName) {
     const correctAns = cols[2];
     const partAns = cols[3];
     const correct = cols[4].trim().toLowerCase() === 'true';
-    // Skip the null/empty final trial
-    if (correctAns === '' || partAns === 'null') continue;
-    trials.push({ trialNum, dbSignal, correctAns, partAns, correct });
+    // Include all trials (including trial 25 which may have null response — 
+    // it's included in SRT so that the last trial's correctness matters)
+    trials.push({ trialNum, dbSignal, correctAns: correctAns || '—', partAns: partAns === 'null' ? '—' : partAns, correct });
   }
 
   if (trials.length < 10) throw new Error('Not enough valid trials found in the file.');
