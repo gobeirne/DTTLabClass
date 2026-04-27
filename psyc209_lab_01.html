@@ -1724,12 +1724,12 @@ window.answerMC = function(btn, isCorrect) {
     // Also highlight the correct one
     siblings.forEach(s => { if (s.dataset.correct) s.classList.add('correct'); });
     fb.className = 'mc-feedback show correct-fb';
-    fb.textContent = "That's right! In practice, we want a test that does a good job of both detecting the condition and avoiding false alarms. The Youden index helps us find this optimal balance.";
+    fb.textContent = "That's right! In practice, we want a test that does a good job of both detecting the condition and avoiding false alarms.";
   } else {
     btn.classList.add('incorrect');
     siblings.forEach(s => { if (s.dataset.correct) s.classList.add('correct'); });
     fb.className = 'mc-feedback show incorrect-fb';
-    fb.textContent = "Not quite. While maximising sensitivity or specificity alone is sometimes important, for most screening purposes we want the best trade-off between catching true cases and avoiding false alarms. Option C is the best answer — the Youden index helps us find this balance.";
+    fb.textContent = "Not quite. While maximising sensitivity or specificity alone is sometimes important, for most screening purposes we want the best trade-off between catching true cases and avoiding false alarms. Option C is the best answer.";
   }
   fb.style.display = 'block';
   document.getElementById('sec9d-continue').style.display = 'block';
