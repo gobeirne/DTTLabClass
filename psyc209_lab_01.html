@@ -631,6 +631,12 @@ body {
           <div class="stat-card orange"><span class="stat-label">False Positives</span><div class="stat-value" id="stat-fp">—</div></div>
           <div class="stat-card orange"><span class="stat-label">False Negatives</span><div class="stat-value" id="stat-fn">—</div></div>
         </div>
+
+        <div class="stats-row" id="quad-sens-spec-stats" style="display:none;">
+          <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-sens-9b">—</div></div>
+          <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-spec-9b">—</div></div>
+          <div class="stat-card"><span class="stat-label">Accuracy</span><div class="stat-value" id="stat-acc-9b">—</div></div>
+        </div>
       </div>
 
       <div style="margin-top:16px; text-align:right;">
@@ -652,21 +658,19 @@ body {
       </table>
 
       <div class="def-box">
-        <span class="def-term">Sensitivity = TP / (TP + FN)</span><br/>
+        <span class="def-term">Sensitivity = TP / (TP + FN) = <span id="formula-sens"></span></span><br/>
         The proportion of people who <em>have</em> the condition that the test correctly identifies ("refers"). A sensitive test catches most of the people who need help.
       </div>
       <div class="def-box">
-        <span class="def-term">Specificity = TN / (TN + FP)</span><br/>
+        <span class="def-term">Specificity = TN / (TN + FP) = <span id="formula-spec"></span></span><br/>
         The proportion of people who <em>don't</em> have the condition that the test correctly passes. A specific test avoids unnecessary referrals.
       </div>
-
-      <div class="stats-row">
-        <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-sens">—</div></div>
-        <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-spec">—</div></div>
-        <div class="stat-card"><span class="stat-label">Accuracy</span><div class="stat-value" id="stat-acc">—</div></div>
+      <div class="def-box">
+        <span class="def-term">Accuracy = (TP + TN) / Total = <span id="formula-acc"></span></span><br/>
+        The proportion of all results that are correct (either true positives or true negatives).
       </div>
 
-      <p>These values update with the sliders above — go back and try different cut-offs!</p>
+      <p>These values update live as you adjust the sliders on the chart above.</p>
 
       <div style="margin-top:16px; text-align:right;">
         <button class="btn btn-primary" onclick="showSec9d()">Continue →</button>
@@ -733,26 +737,47 @@ body {
       </div>
     </div>
 
-    <!-- 9g: Both curves + Youden's J -->
+    <!-- 9g: Both curves — find the optimal balance, then reveal Youden's J -->
     <div id="sec9g" style="display:none;">
-      <h3>Sensitivity &amp; Specificity Together — Youden's J</h3>
-      <p>Now let's see both curves together. The <strong>Youden index (J)</strong> is simply: <em>J = Sensitivity + Specificity − 1</em>. It reaches its maximum at the optimal cut-off point.</p>
+      <h3>Finding the Optimal Balance</h3>
+      <p>Now let's see both sensitivity and specificity together. Your challenge: <strong>find the test cut-off that gives the best balance between sensitivity and specificity.</strong> Move the slider and watch both values — try to find the sweet spot where both are as high as possible.</p>
 
       <div class="demo-box interactive">
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
-          <input type="range" id="slider-combined" min="-22" max="0" value="-15.9" step="0.1" oninput="updateCombinedChart()"/>
-          <span class="slider-val" id="val-combined">-15.9 dB SNR</span>
+          <input type="range" id="slider-combined" min="-22" max="0" value="-22" step="0.1" oninput="updateCombinedChart()"/>
+          <span class="slider-val" id="val-combined">-22.0 dB SNR</span>
         </div>
         <div class="chart-wrap"><canvas id="chart-combined"></canvas></div>
         <div class="stats-row">
           <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-comb-sens">—</div></div>
           <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-comb-spec">—</div></div>
-          <div class="stat-card"><span class="stat-label">Youden's J</span><div class="stat-value" id="stat-comb-j">—</div></div>
+        </div>
+
+        <div id="lockin-area" style="margin-top:16px; text-align:center;">
+          <p>When you're happy with your choice, lock it in:</p>
+          <button class="btn btn-primary" id="btn-lockin" onclick="lockInChoice()">🔒 Lock in my cut-off</button>
+        </div>
+
+        <!-- Youden reveal (hidden until lock-in) -->
+        <div id="youden-reveal" style="display:none; margin-top:20px;">
+          <div class="result-banner" id="youden-result-banner"></div>
+
+          <p style="margin-top:16px;">There is actually a formal way to find this optimal balance. The <strong>Youden index (J)</strong> is simply:</p>
+          <div class="def-box">
+            <span class="def-term">J = Sensitivity + Specificity − 1</span><br/>
+            The cut-off where J is maximised gives the best trade-off between sensitivity and specificity.
+          </div>
+
+          <div class="stats-row" style="margin-top:12px;">
+            <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-comb-sens-final">—</div></div>
+            <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-comb-spec-final">—</div></div>
+            <div class="stat-card"><span class="stat-label">Youden's J</span><div class="stat-value" id="stat-comb-j">—</div></div>
+          </div>
         </div>
       </div>
 
-      <div style="margin-top:16px; text-align:right;">
+      <div id="sec9g-continue" style="display:none; margin-top:16px; text-align:right;">
         <button class="btn btn-primary" onclick="showSec9h()">Continue →</button>
       </div>
     </div>
@@ -1159,9 +1184,19 @@ window.updateQuadrantChart = function() {
 
   // Also update sensitivity/specificity if visible
   const m = computeMetrics(POP_DATA_NZENG, hlCut, srtCut);
-  document.getElementById('stat-sens').textContent = (m.sens * 100).toFixed(1) + '%';
-  document.getElementById('stat-spec').textContent = (m.spec * 100).toFixed(1) + '%';
-  document.getElementById('stat-acc').textContent = (m.acc * 100).toFixed(1) + '%';
+  // Update formula displays in 9c
+  const total = POP_DATA_NZENG.length;
+  const fSens = document.getElementById('formula-sens');
+  const fSpec = document.getElementById('formula-spec');
+  const fAcc = document.getElementById('formula-acc');
+  if (fSens) fSens.textContent = `${m.tp} / (${m.tp} + ${m.fn}) = ${(m.sens * 100).toFixed(1)}%`;
+  if (fSpec) fSpec.textContent = `${m.tn} / (${m.tn} + ${m.fp}) = ${(m.spec * 100).toFixed(1)}%`;
+  if (fAcc) fAcc.textContent = `(${m.tp} + ${m.tn}) / ${total} = ${(m.acc * 100).toFixed(1)}%`;
+
+  // Also update the inline 9b copies
+  document.getElementById('stat-sens-9b').textContent = (m.sens * 100).toFixed(1) + '%';
+  document.getElementById('stat-spec-9b').textContent = (m.spec * 100).toFixed(1) + '%';
+  document.getElementById('stat-acc-9b').textContent = (m.acc * 100).toFixed(1) + '%';
 };
 
 /* ===================================================================
@@ -1288,16 +1323,24 @@ window.updateSpecExplore = function() {
 };
 
 /* ===================================================================
-   SECTION 9g: Combined sens + spec + Youden
+   SECTION 9g: Combined sens + spec — then Youden reveal
    =================================================================== */
+let combinedYoudenRevealed = false;
+let bestYoudenCo = 0;
+let bestYoudenSens = 0;
+let bestYoudenSpec = 0;
+let bestYoudenJ = 0;
+
 function initCombinedChart() {
   // Pre-compute full curves
-  const sensData = [], specData = [], youdenData = [];
+  const sensData = [], specData = [];
+  bestYoudenJ = -1;
   for (let co = -22; co <= 0; co += 0.2) {
     const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
     sensData.push({ x: co, y: m.sens });
     specData.push({ x: co, y: m.spec });
-    youdenData.push({ x: co, y: m.sens + m.spec - 1 });
+    const j = m.sens + m.spec - 1;
+    if (j > bestYoudenJ) { bestYoudenJ = j; bestYoudenCo = co; bestYoudenSens = m.sens; bestYoudenSpec = m.spec; }
   }
 
   const ctx = document.getElementById('chart-combined').getContext('2d');
@@ -1306,8 +1349,7 @@ function initCombinedChart() {
     data: {
       datasets: [
         { label: 'Sensitivity', data: sensData, showLine: true, borderColor: '#2d8a4e', pointRadius: 0, borderWidth: 2.5, tension: 0.1 },
-        { label: 'Specificity', data: specData, showLine: true, borderColor: '#e67e22', pointRadius: 0, borderWidth: 2.5, tension: 0.1 },
-        { label: "Youden's J", data: youdenData, showLine: true, borderColor: '#aaa', pointRadius: 0, borderWidth: 1.5, borderDash: [4, 3], tension: 0.1 }
+        { label: 'Specificity', data: specData, showLine: true, borderColor: '#e67e22', pointRadius: 0, borderWidth: 2.5, tension: 0.1 }
       ]
     },
     options: {
@@ -1315,7 +1357,7 @@ function initCombinedChart() {
       plugins: { legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 } } } },
       scales: {
         x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 0 },
-        y: { title: { display: true, text: 'Sensitivity / Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -0.1, max: 1.05 }
+        y: { title: { display: true, text: 'Sensitivity / Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.05 }
       }
     },
     plugins: [{
@@ -1342,24 +1384,86 @@ window.updateCombinedChart = function() {
   const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
   document.getElementById('stat-comb-sens').textContent = (m.sens * 100).toFixed(1) + '%';
   document.getElementById('stat-comb-spec').textContent = (m.spec * 100).toFixed(1) + '%';
-  document.getElementById('stat-comb-j').textContent = (m.sens + m.spec - 1).toFixed(3);
   chartCombined.update('none');
+};
+
+window.lockInChoice = function() {
+  const userCo = parseFloat(document.getElementById('slider-combined').value);
+  const diff = Math.abs(userCo - bestYoudenCo);
+
+  // Disable slider
+  document.getElementById('slider-combined').disabled = true;
+  document.getElementById('btn-lockin').disabled = true;
+  document.getElementById('lockin-area').style.display = 'none';
+
+  // Add Youden curve to chart
+  const youdenData = [];
+  for (let co = -22; co <= 0; co += 0.2) {
+    const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
+    youdenData.push({ x: co, y: m.sens + m.spec - 1 });
+  }
+  chartCombined.data.datasets.push({
+    label: "Youden's J", data: youdenData, showLine: true,
+    borderColor: '#aaa', pointRadius: 0, borderWidth: 1.5, borderDash: [4, 3], tension: 0.1
+  });
+  chartCombined.options.scales.y.min = -0.1;
+  chartCombined.update();
+
+  // Build feedback
+  const banner = document.getElementById('youden-result-banner');
+  let feedback;
+  if (diff <= 0.5) {
+    feedback = `🎯 Excellent! You chose ${userCo.toFixed(1)} dB SNR — the Youden-optimal cut-off is ${bestYoudenCo.toFixed(1)} dB SNR. That's spot on!`;
+    banner.className = 'result-banner pass';
+  } else if (diff <= 2) {
+    feedback = `👏 Very close! You chose ${userCo.toFixed(1)} dB SNR — the Youden-optimal cut-off is ${bestYoudenCo.toFixed(1)} dB SNR. Only ${diff.toFixed(1)} dB off!`;
+    banner.className = 'result-banner pass';
+  } else {
+    feedback = `You chose ${userCo.toFixed(1)} dB SNR — the Youden-optimal cut-off is actually ${bestYoudenCo.toFixed(1)} dB SNR (${diff.toFixed(1)} dB away). The Youden's J curve below shows where the peak balance occurs.`;
+    banner.className = 'result-banner refer';
+  }
+  banner.innerHTML = feedback;
+
+  // Fill final stats
+  document.getElementById('stat-comb-sens-final').textContent = (bestYoudenSens * 100).toFixed(1) + '%';
+  document.getElementById('stat-comb-spec-final').textContent = (bestYoudenSpec * 100).toFixed(1) + '%';
+  document.getElementById('stat-comb-j').textContent = bestYoudenJ.toFixed(3);
+
+  // Reveal
+  document.getElementById('youden-reveal').style.display = 'block';
+  document.getElementById('sec9g-continue').style.display = 'block';
+  combinedYoudenRevealed = true;
+
+  setTimeout(() => document.getElementById('youden-reveal').scrollIntoView({ behavior: 'smooth' }), 100);
 };
 
 /* ===================================================================
    SECTION 9h: ROC curve
    =================================================================== */
 function initROCChart() {
-  // Compute ROC points
-  const rocPoints = [];
+  // Compute ROC points by sweeping cut-off from most negative to least negative.
+  // This traces the curve from bottom-left (everything passes) to top-right (everything refers).
+  const rawPoints = [];
   let bestJ = -1, bestCo = 0, bestSens = 0, bestSpec = 0;
-  for (let co = -22; co <= 0; co += 0.1) {
+  for (let co = -24; co <= 2; co += 0.05) {
     const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
-    rocPoints.push({ x: 1 - m.spec, y: m.sens });
+    const fpr = 1 - m.spec;
+    rawPoints.push({ x: fpr, y: m.sens, co });
     const j = m.sens + m.spec - 1;
     if (j > bestJ) { bestJ = j; bestCo = co; bestSens = m.sens; bestSpec = m.spec; }
   }
-  rocPoints.sort((a, b) => a.x - b.x);
+
+  // Deduplicate: keep only points where (x, y) actually changes
+  const rocPoints = [rawPoints[0]];
+  for (let i = 1; i < rawPoints.length; i++) {
+    const prev = rocPoints[rocPoints.length - 1];
+    if (rawPoints[i].x !== prev.x || rawPoints[i].y !== prev.y) {
+      rocPoints.push(rawPoints[i]);
+    }
+  }
+
+  // Sort by x (FPR) then by y for proper staircase
+  rocPoints.sort((a, b) => a.x - b.x || a.y - b.y);
 
   // AUC by trapezoidal rule
   let auc = 0;
@@ -1376,7 +1480,7 @@ function initROCChart() {
       datasets: [
         {
           label: `Test SRT vs 4FA > 25 dB HL (AUC=${auc.toFixed(2)})`,
-          data: rocPoints, showLine: true,
+          data: rocPoints.map(p => ({x: p.x, y: p.y})), showLine: true,
           borderColor: '#1a5276', backgroundColor: 'rgba(26, 82, 118, 0.08)',
           fill: true, pointRadius: 0, borderWidth: 2.5, tension: 0
         },
@@ -1395,7 +1499,7 @@ function initROCChart() {
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: true, aspectRatio: 1.2,
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1,
       plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 } } } },
       scales: {
         x: { title: { display: true, text: '1 − Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1 },
@@ -1420,6 +1524,8 @@ window.showSec9b = function() {
 };
 window.showSec9c = function() {
   document.getElementById('sec9c').style.display = 'block';
+  // Reveal the sens/spec/accuracy stats inline in 9b
+  document.getElementById('quad-sens-spec-stats').style.display = 'flex';
   // Trigger initial calculation
   updateQuadrantChart();
   document.getElementById('sec9c').scrollIntoView({ behavior: 'smooth' });
