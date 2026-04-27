@@ -1,0 +1,1707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PSYC209 Lab Class — Sensation &amp; Perception</title>
+
+<!-- Chart.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+
+<style>
+/* ===== FONTS ===== */
+@import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600;8..60,700&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ===== CSS VARIABLES ===== */
+:root {
+  --bg: #f8f7f4;
+  --bg-section: #ffffff;
+  --bg-demo: #f0eeea;
+  --text: #1a1a1a;
+  --text-muted: #5a5a5a;
+  --accent: #b8252a;       /* UC red-ish */
+  --accent-dark: #8c1d20;
+  --green: #2d8a4e;
+  --green-light: #3cb06a;
+  --red: #c0392b;
+  --orange: #e67e22;
+  --gold: #f1c40f;
+  --blue: #2471a3;
+  --blue-light: #5dade2;
+  --border: #d5d0c8;
+  --shadow: 0 2px 12px rgba(0,0,0,0.06);
+  --radius: 8px;
+  --font-body: 'DM Sans', sans-serif;
+  --font-heading: 'Source Serif 4', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+/* ===== RESET & BASE ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== LAYOUT ===== */
+.page-wrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 24px 20px 120px;
+}
+
+/* ===== HEADER ===== */
+.lab-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 24px 0 16px;
+  border-bottom: 3px solid var(--text);
+  margin-bottom: 32px;
+}
+.lab-header img {
+  height: 60px;
+  width: auto;
+}
+.lab-header-text h1 {
+  font-family: var(--font-heading);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.lab-header-text .subtitle {
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ===== SECTIONS ===== */
+.lab-section {
+  background: var(--bg-section);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 32px 36px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  /* progressive reveal */
+  display: none;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.lab-section.visible {
+  display: block;
+}
+.lab-section.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.lab-section h2 {
+  font-family: var(--font-heading);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--accent-dark);
+  border-bottom: 2px solid var(--bg-demo);
+  padding-bottom: 8px;
+}
+
+.lab-section h3 {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 20px 0 10px;
+}
+
+.lab-section p {
+  margin-bottom: 14px;
+}
+
+.lab-section ul, .lab-section ol {
+  margin: 10px 0 14px 24px;
+}
+.lab-section li {
+  margin-bottom: 6px;
+}
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-dark); }
+.btn-secondary {
+  background: var(--bg-demo);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: #e6e3dd; }
+.btn-link {
+  background: var(--blue);
+  color: #fff;
+}
+.btn-link:hover { background: #1a5276; }
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== DEMO BOXES ===== */
+.demo-box {
+  background: var(--bg-demo);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  margin: 16px 0;
+}
+.demo-box.interactive {
+  border-left: 4px solid var(--blue);
+}
+
+/* ===== CHART CONTAINERS ===== */
+.chart-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 700px;
+  margin: 16px auto;
+}
+.chart-wrap canvas {
+  width: 100% !important;
+}
+
+/* ===== SLIDERS ===== */
+.slider-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 12px 0;
+  flex-wrap: wrap;
+}
+.slider-group label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+.slider-group input[type="range"] {
+  flex: 1;
+  min-width: 200px;
+  accent-color: var(--accent);
+  height: 6px;
+}
+.slider-val {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  min-width: 80px;
+  text-align: right;
+  font-weight: 500;
+}
+
+/* ===== STATS ROW ===== */
+.stats-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.stat-card {
+  flex: 1;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+  text-align: center;
+}
+.stat-card .stat-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+.stat-card .stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-top: 4px;
+}
+.stat-card.green .stat-value { color: var(--green); }
+.stat-card.red .stat-value { color: var(--red); }
+.stat-card.blue .stat-value { color: var(--blue); }
+.stat-card.orange .stat-value { color: var(--orange); }
+
+/* ===== MULTICHOICE ===== */
+.mc-option {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  margin: 6px 0;
+  background: #fff;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  line-height: 1.5;
+}
+.mc-option:hover { border-color: var(--blue); background: #f5f9fc; }
+.mc-option.correct { border-color: var(--green); background: #eafaf1; }
+.mc-option.incorrect { border-color: var(--red); background: #fdf2f0; }
+.mc-feedback {
+  margin-top: 10px;
+  padding: 12px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  display: none;
+}
+.mc-feedback.show { display: block; }
+.mc-feedback.correct-fb { background: #eafaf1; color: var(--green); border: 1px solid var(--green); }
+.mc-feedback.incorrect-fb { background: #fdf2f0; color: var(--red); border: 1px solid var(--red); }
+
+/* ===== 2x2 TABLE ===== */
+.confusion-table {
+  border-collapse: collapse;
+  margin: 16px auto;
+  font-size: 0.9rem;
+}
+.confusion-table th, .confusion-table td {
+  border: 2px solid var(--border);
+  padding: 10px 18px;
+  text-align: center;
+  font-weight: 600;
+}
+.confusion-table th {
+  background: var(--bg-demo);
+}
+.confusion-table .cell-tp { background: #fde; color: var(--red); }
+.confusion-table .cell-fn { background: #fec; color: var(--orange); }
+.confusion-table .cell-fp { background: #fec; color: var(--orange); }
+.confusion-table .cell-tn { background: #dfe; color: var(--green); }
+
+/* ===== FILE DROP ===== */
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  cursor: pointer;
+  margin: 16px 0;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--blue);
+  background: #f0f6fc;
+  color: var(--blue);
+}
+.drop-zone input[type="file"] {
+  display: none;
+}
+
+/* ===== ADAPTIVE TRACK TABLE ===== */
+.trial-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 12px 0;
+}
+.trial-table th {
+  background: var(--bg-demo);
+  font-weight: 600;
+  padding: 8px 10px;
+  text-align: center;
+  border: 1px solid var(--border);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.trial-table td {
+  padding: 6px 10px;
+  text-align: center;
+  border: 1px solid var(--border);
+}
+.trial-table tr.excluded { opacity: 0.4; }
+.trial-table tr.correct-row { background: #f0faf4; }
+.trial-table tr.incorrect-row { background: #fef6f4; }
+
+/* ===== RESULT BANNER ===== */
+.result-banner {
+  padding: 20px 24px;
+  border-radius: var(--radius);
+  margin: 20px 0;
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+.result-banner.pass {
+  background: #eafaf1;
+  color: var(--green);
+  border: 2px solid var(--green);
+}
+.result-banner.refer {
+  background: #fdf2f0;
+  color: var(--red);
+  border: 2px solid var(--red);
+}
+
+/* ===== TONE BUTTONS ===== */
+.tone-btn-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+}
+.tone-btn {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.tone-btn:hover { background: var(--bg-demo); border-color: var(--blue); }
+.tone-btn.playing { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+/* ===== DEFINITIONS ===== */
+.def-box {
+  background: #fafaf8;
+  border-left: 4px solid var(--accent);
+  padding: 14px 18px;
+  margin: 12px 0;
+  border-radius: 0 6px 6px 0;
+}
+.def-box .def-term {
+  font-weight: 700;
+  font-family: var(--font-heading);
+  color: var(--accent-dark);
+}
+
+/* ===== PLACEHOLDER NOTICE ===== */
+.placeholder-note {
+  background: #fff9e6;
+  border: 1px dashed #d4a017;
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 0.85rem;
+  color: #7a6c00;
+  margin: 10px 0;
+}
+
+/* ===== CODE / ID EXAMPLE ===== */
+.id-example {
+  font-family: var(--font-mono);
+  background: var(--bg-demo);
+  padding: 8px 14px;
+  border-radius: 6px;
+  display: inline-block;
+  margin: 6px 0;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  .lab-section { padding: 20px 18px; }
+  .lab-header { flex-direction: column; text-align: center; }
+  .stats-row { flex-direction: column; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ===== HEADER ===== -->
+  <header class="lab-header">
+    <img src="UClogo.png" alt="University of Canterbury Logo" />
+    <div class="lab-header-text">
+      <h1>PSYC209 Lab Class</h1>
+      <div class="subtitle">Sensation &amp; Perception — Hearing Screening</div>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 1: Introduction                                       -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-intro" data-section="1">
+    <h2>1. Introduction</h2>
+
+    <!-- COLLABORATOR: Replace or expand this introductory text -->
+    <p>Welcome to the PSYC209 Hearing Screening Lab! In this lab you will learn about hearing screening tests — how they work, how we decide whether someone "passes" or is "referred" for further testing, and what makes a screening test good or bad.</p>
+    <p>You'll work through interactive demos, and then take a real hearing screening test yourself. We'll analyse your results together and see where your hearing sits relative to a population of listeners.</p>
+    <p>Work through each section at your own pace. New sections will appear as you complete each one.</p>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(1)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 2: Screening vs Diagnostic Tests                      -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-screening" data-section="2">
+    <h2>2. Screening Tests vs Diagnostic Tests</h2>
+
+    <!-- COLLABORATOR: Replace or expand this text -->
+    <div class="def-box">
+      <span class="def-term">Screening test:</span> A quick, efficient test designed to identify people who <em>may</em> have a condition. The goal is to flag those who should undergo further evaluation. It doesn't provide a diagnosis — it sorts people into "probably fine" and "needs more investigation."
+    </div>
+    <div class="def-box">
+      <span class="def-term">Diagnostic test:</span> A more thorough and definitive assessment used to confirm whether a condition is actually present. These are typically administered by a specialist and are more time-consuming and expensive than screening tests.
+    </div>
+
+    <p>A good analogy: a screening test is like airport security — it's fast and catches most threats, but sometimes it flags harmless items (false alarms) and occasionally misses something (misses). Diagnostic testing is like the detailed bag search that follows.</p>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(2)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 3: Digit Triplet Test                                 -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-dtt" data-section="3">
+    <h2>3. The Digit Triplet Test</h2>
+
+    <!-- COLLABORATOR: Replace or expand this text -->
+    <p>The digit triplet test (DTT) is a speech-in-noise hearing screening test. You hear three spoken digits (e.g., "3–6–9") embedded in background noise, and you try to identify them. The noise level stays the same but the speech level changes — getting quieter when you're doing well, and louder when you're struggling.</p>
+    <p>The test adapts to find the <strong>speech reception threshold (SRT)</strong>: the signal-to-noise ratio (SNR) at which you can just barely identify the digits correctly. A lower (more negative) SRT means you can hear the speech at a quieter level relative to the noise — which indicates better hearing.</p>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(3)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 4: The NZ Hearing Screening Test                      -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-nzhst" data-section="4">
+    <h2>4. The Aotearoa New Zealand Hearing Screening Test</h2>
+
+    <!-- COLLABORATOR: Replace or expand this text -->
+    <p>The Aotearoa New Zealand Hearing Screening Test (NZHST) is a digit triplet test developed here at the University of Canterbury. It is available in both English and te reo Māori, making it one of the few hearing screening tools in the world available in an indigenous language.</p>
+    <p>You will take this test yourself shortly. But first, let's explore some of the concepts behind how the test works and how we evaluate its accuracy.</p>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(4)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 5: Digit Sound Demo (placeholder)                     -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-digits" data-section="5">
+    <h2>5. The Digit Sounds</h2>
+
+    <div class="placeholder-note">
+      📌 <strong>Placeholder:</strong> This section will contain playable examples of the spoken digit recordings used in the test.
+    </div>
+
+    <p>The test uses recordings of digits 0–9 spoken by a native speaker. Each trial presents three digits in sequence, embedded in noise.</p>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(5)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 6: Noise Demo (placeholder)                           -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-noise" data-section="6">
+    <h2>6. The Background Noise</h2>
+
+    <div class="placeholder-note">
+      📌 <strong>Placeholder:</strong> This section will contain a demo of how speech-weighted noise is generated — including an embedded video, waveform display, FFT spectrum, and optionally the ability to record your own voice and generate noise from it.
+    </div>
+
+    <p>The background noise used in the test isn't just random static — it's carefully shaped to have the same long-term frequency spectrum as the speech it masks. This is called <strong>speech-weighted noise</strong>.</p>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(6)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 7: Binaural Advantage (placeholder)                   -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-binaural" data-section="7">
+    <h2>7. Binaural Advantage</h2>
+
+    <div class="placeholder-note">
+      📌 <strong>Placeholder:</strong> This section will contain an interactive demo of the binaural advantage — how having two ears helps us hear in noise.
+    </div>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(7)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 8: Antiphasic Advantage (placeholder)                 -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-antiphasic" data-section="8">
+    <h2>8. Antiphasic Advantage</h2>
+
+    <div class="placeholder-note">
+      📌 <strong>Placeholder:</strong> This section will contain an interactive demo of the antiphasic (NπS₀) advantage — how inverting the noise in one ear dramatically improves intelligibility.
+    </div>
+
+    <div style="margin-top:20px; text-align:right;">
+      <button class="btn btn-primary" onclick="revealNext(8)">Continue →</button>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 9: Sensitivity, Specificity & ROC                     -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-sensspec" data-section="9">
+    <h2>9. Sensitivity, Specificity &amp; ROC Analysis</h2>
+
+    <!-- 9a: Gold standard intro + tone buttons -->
+    <div id="sec9a">
+      <p>To tell if a screening test is accurate, we need to compare against a <strong>gold standard</strong>. For this test, the comparison is with pure-tone audiometry — specifically, the four-frequency average (4FA) of hearing thresholds at 500 Hz, 1 kHz, 2 kHz, and 4 kHz.</p>
+      <p>Click each frequency below to hear a tone at that frequency:</p>
+
+      <div class="tone-btn-row">
+        <button class="tone-btn" onclick="playTone(500, this)">500 Hz</button>
+        <button class="tone-btn" onclick="playTone(1000, this)">1 kHz</button>
+        <button class="tone-btn" onclick="playTone(2000, this)">2 kHz</button>
+        <button class="tone-btn" onclick="playTone(4000, this)">4 kHz</button>
+      </div>
+
+      <p style="margin-top:16px;">Here is the data showing the test SRTs scored by people with different hearing levels. Each dot represents one person — their pure-tone average (gold standard) on the x-axis and their screening test SRT on the y-axis:</p>
+
+      <div class="chart-wrap"><canvas id="chart-scatter1"></canvas></div>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec9b()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- 9b: Add cut-off lines + quadrant labels + slider -->
+    <div id="sec9b" style="display:none;">
+      <h3>Pass, Refer, and the Confusion Matrix</h3>
+      <p>A screening test has two possible outcomes: <strong>"pass"</strong> (you probably don't have the condition) and <strong>"refer"</strong> (you should get diagnostic testing to check). To evaluate the test, we compare these outcomes against the gold standard using two cut-offs:</p>
+      <ol>
+        <li>A <strong>hearing-level cut-off</strong> — above this, the gold standard says the person has a hearing loss</li>
+        <li>A <strong>test SRT cut-off</strong> — above (less negative than) this, the screening test says "refer"</li>
+      </ol>
+      <p>This creates four quadrants. Try adjusting the sliders to see how the data points change classification:</p>
+
+      <div class="demo-box interactive">
+        <div class="slider-group">
+          <label>Hearing-level cut-off:</label>
+          <input type="range" id="slider-hl" min="5" max="60" value="25" step="1" oninput="updateQuadrantChart()"/>
+          <span class="slider-val" id="val-hl">25 dB HL</span>
+        </div>
+        <div class="slider-group">
+          <label>Test SRT cut-off:</label>
+          <input type="range" id="slider-srt" min="-22" max="-4" value="-15.9" step="0.1" oninput="updateQuadrantChart()"/>
+          <span class="slider-val" id="val-srt">-15.9 dB SNR</span>
+        </div>
+
+        <div class="chart-wrap"><canvas id="chart-quadrant"></canvas></div>
+
+        <div class="stats-row" id="quad-stats">
+          <div class="stat-card red"><span class="stat-label">True Positives</span><div class="stat-value" id="stat-tp">—</div></div>
+          <div class="stat-card green"><span class="stat-label">True Negatives</span><div class="stat-value" id="stat-tn">—</div></div>
+          <div class="stat-card orange"><span class="stat-label">False Positives</span><div class="stat-value" id="stat-fp">—</div></div>
+          <div class="stat-card orange"><span class="stat-label">False Negatives</span><div class="stat-value" id="stat-fn">—</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec9c()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- 9c: Sensitivity and Specificity explanation -->
+    <div id="sec9c" style="display:none;">
+      <h3>Sensitivity &amp; Specificity</h3>
+
+      <p>From these four groups we can calculate two key metrics:</p>
+
+      <table class="confusion-table">
+        <tr><th></th><th colspan="2">Screening Test</th></tr>
+        <tr><th></th><th>Refer</th><th>Pass</th></tr>
+        <tr><th>Condition Present<br/>(4FA &gt; cut-off)</th><td class="cell-tp">Hit (TP)</td><td class="cell-fn">Miss (FN)</td></tr>
+        <tr><th>Condition Absent<br/>(4FA ≤ cut-off)</th><td class="cell-fp">False Alarm (FP)</td><td class="cell-tn">Correct Reject (TN)</td></tr>
+      </table>
+
+      <div class="def-box">
+        <span class="def-term">Sensitivity = TP / (TP + FN)</span><br/>
+        The proportion of people who <em>have</em> the condition that the test correctly identifies ("refers"). A sensitive test catches most of the people who need help.
+      </div>
+      <div class="def-box">
+        <span class="def-term">Specificity = TN / (TN + FP)</span><br/>
+        The proportion of people who <em>don't</em> have the condition that the test correctly passes. A specific test avoids unnecessary referrals.
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-sens">—</div></div>
+        <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-spec">—</div></div>
+        <div class="stat-card"><span class="stat-label">Accuracy</span><div class="stat-value" id="stat-acc">—</div></div>
+      </div>
+
+      <p>These values update with the sliders above — go back and try different cut-offs!</p>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec9d()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- 9d: Multichoice question -->
+    <div id="sec9d" style="display:none;">
+      <h3>Quick Check</h3>
+      <p>When choosing a test cut-off, is it best to:</p>
+
+      <button class="mc-option" onclick="answerMC(this, false)">A. Make sure all the people who <em>do</em> have the condition are picked up ("refer") — this maximises the <strong>sensitivity</strong> of the test.</button>
+      <button class="mc-option" onclick="answerMC(this, false)">B. Make sure all the people who <em>don't</em> have the condition pass the test — this maximises the <strong>specificity</strong> of the test.</button>
+      <button class="mc-option" data-correct="true" onclick="answerMC(this, true)">C. Choose a cut-off that finds the best compromise and does a good job of both — this has the optimum combination of sensitivity and specificity.</button>
+
+      <div class="mc-feedback" id="mc-fb-9d"></div>
+
+      <div id="sec9d-continue" style="display:none; margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec9e()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- 9e: Sensitivity curve with slider -->
+    <div id="sec9e" style="display:none;">
+      <h3>Exploring Sensitivity</h3>
+      <p>Sensitivity is the proportion of people with the condition that the test correctly identifies. Drag the slider from left to right to trace the sensitivity curve. The curve plots sensitivity at each possible test cut-off:</p>
+
+      <div class="demo-box interactive">
+        <div class="slider-group">
+          <label>Test SRT cut-off:</label>
+          <input type="range" id="slider-sens-explore" min="-22" max="0" value="-22" step="0.2" oninput="updateSensExplore()"/>
+          <span class="slider-val" id="val-sens-explore">-22 dB SNR</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-sens-explore"></canvas></div>
+        <div class="stats-row">
+          <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-sens-ex">—</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec9f()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- 9f: Specificity curve with slider -->
+    <div id="sec9f" style="display:none;">
+      <h3>Exploring Specificity</h3>
+      <p>Now do the same for specificity — the proportion of people <em>without</em> the condition that the test correctly passes:</p>
+
+      <div class="demo-box interactive">
+        <div class="slider-group">
+          <label>Test SRT cut-off:</label>
+          <input type="range" id="slider-spec-explore" min="-22" max="0" value="-22" step="0.2" oninput="updateSpecExplore()"/>
+          <span class="slider-val" id="val-spec-explore">-22 dB SNR</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-spec-explore"></canvas></div>
+        <div class="stats-row">
+          <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-spec-ex">—</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec9g()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- 9g: Both curves + Youden's J -->
+    <div id="sec9g" style="display:none;">
+      <h3>Sensitivity &amp; Specificity Together — Youden's J</h3>
+      <p>Now let's see both curves together. The <strong>Youden index (J)</strong> is simply: <em>J = Sensitivity + Specificity − 1</em>. It reaches its maximum at the optimal cut-off point.</p>
+
+      <div class="demo-box interactive">
+        <div class="slider-group">
+          <label>Test SRT cut-off:</label>
+          <input type="range" id="slider-combined" min="-22" max="0" value="-15.9" step="0.1" oninput="updateCombinedChart()"/>
+          <span class="slider-val" id="val-combined">-15.9 dB SNR</span>
+        </div>
+        <div class="chart-wrap"><canvas id="chart-combined"></canvas></div>
+        <div class="stats-row">
+          <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-comb-sens">—</div></div>
+          <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-comb-spec">—</div></div>
+          <div class="stat-card"><span class="stat-label">Youden's J</span><div class="stat-value" id="stat-comb-j">—</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec9h()">Continue →</button>
+      </div>
+    </div>
+
+    <!-- 9h: ROC curve -->
+    <div id="sec9h" style="display:none;">
+      <h3>The ROC Curve</h3>
+      <p>The same data can also be plotted as a <strong>Receiver Operating Characteristic (ROC)</strong> curve. This plots sensitivity (y-axis) against 1 − specificity (x-axis) for every possible cut-off. A perfect test would have a curve that goes straight up to the top-left corner.</p>
+      <p>The <strong>area under the curve (AUC)</strong> summarises the test's overall discriminating ability. An AUC of 1.0 is perfect; 0.5 is no better than chance.</p>
+
+      <div class="demo-box">
+        <div class="chart-wrap"><canvas id="chart-roc"></canvas></div>
+        <div class="stats-row">
+          <div class="stat-card blue"><span class="stat-label">AUC</span><div class="stat-value" id="stat-auc">—</div></div>
+          <div class="stat-card green"><span class="stat-label">Optimal cut-off</span><div class="stat-value" id="stat-optimal-co">—</div></div>
+          <div class="stat-card green"><span class="stat-label">Sensitivity @ optimal</span><div class="stat-value" id="stat-opt-sens">—</div></div>
+          <div class="stat-card blue"><span class="stat-label">Specificity @ optimal</span><div class="stat-value" id="stat-opt-spec">—</div></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px; text-align:right;">
+        <button class="btn btn-primary" onclick="revealNext(9)">Continue to the Main Event →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- SECTION 10: THE MAIN EVENT                                    -->
+  <!-- ============================================================ -->
+  <div class="lab-section" id="sec-main" data-section="10">
+    <h2>10. The Main Event — Take the Test!</h2>
+
+    <!-- 10a: Instructions -->
+    <div id="sec10a">
+      <p>It's time to take the Aotearoa New Zealand Hearing Screening Test yourself!</p>
+
+      <h3>Instructions</h3>
+      <p>When you open the test, you'll be asked to enter an ID. Please enter the course code followed by a space and your UC email address, like this:</p>
+      <div class="id-example">PSYC209 abc123@uclive.ac.nz</div>
+      <p>(Replace <code>abc123</code> with your own usercode.)</p>
+
+      <p>This will trigger the test to email your results to you, including a <code>.csv</code> file with all the trial-by-trial data.</p>
+
+      <p>You can do the test in <strong>English</strong> or <strong>te reo Māori</strong> — the choice is yours. Use headphones if possible for the best results.</p>
+
+      <div style="margin: 20px 0;">
+        <a href="https://nzhst.canterbury.ac.nz/" target="_blank" class="btn btn-link" style="font-size:1.1rem; padding: 14px 32px;">
+          🎧 Open the NZ Hearing Screening Test →
+        </a>
+      </div>
+
+      <p>Once you've completed the test and received your results email, come back here and upload your <code>.csv</code> file below.</p>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn btn-primary" onclick="showSec10b()">I've done the test — let's analyse! →</button>
+      </div>
+    </div>
+
+    <!-- 10b: CSV Upload & Analysis -->
+    <div id="sec10b" style="display:none;">
+      <h3>Upload Your Results</h3>
+      <p>Drag and drop your <code>.csv</code> results file here, or click to browse:</p>
+
+      <div class="drop-zone" id="csv-drop" onclick="document.getElementById('csv-input').click()">
+        <div style="font-size:2rem; margin-bottom:8px;">📄</div>
+        <div>Drop your .csv file here or <strong>click to browse</strong></div>
+        <input type="file" id="csv-input" accept=".csv" onchange="handleCSV(this.files[0])"/>
+      </div>
+      <div id="csv-error" style="color:var(--red); margin:8px 0; display:none;"></div>
+
+      <!-- Results appear here after upload -->
+      <div id="results-area" style="display:none;">
+
+        <h3>Your Adaptive Track</h3>
+        <p>The chart below shows how the signal level (in dB SNR) changed across your 25 trials. Green dots are trials you got correct; red dots are incorrect:</p>
+        <div class="chart-wrap"><canvas id="chart-adaptive"></canvas></div>
+
+        <h3>Trial-by-Trial Data</h3>
+        <p>The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. Your SRT is the average of the signal levels from trial 8 onward.</p>
+        <div style="overflow-x:auto;">
+          <table class="trial-table" id="trial-table">
+            <thead>
+              <tr>
+                <th>Trial</th>
+                <th>Signal (dB SNR)</th>
+                <th>Digits Presented</th>
+                <th>Your Response</th>
+                <th>Correct?</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>Your SRT</h3>
+        <div class="stats-row">
+          <div class="stat-card blue"><span class="stat-label">Your SRT</span><div class="stat-value" id="stat-your-srt">—</div></div>
+          <div class="stat-card"><span class="stat-label">Test cut-off</span><div class="stat-value" id="stat-cutoff-display">-15.9</div></div>
+        </div>
+
+        <div class="result-banner" id="result-banner"></div>
+
+        <h3>Your Result in Context</h3>
+        <p>The scatter plot below shows where your SRT sits relative to the population data. Your score is shown as a prominent dashed line:</p>
+        <div class="chart-wrap"><canvas id="chart-final-scatter"></canvas></div>
+
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.page-wrap -->
+
+
+<!-- ================================================================ -->
+<!-- JAVASCRIPT                                                       -->
+<!-- ================================================================ -->
+<script>
+(() => {
+"use strict";
+
+/* ===================================================================
+   POPULATION DATA — NZ English
+   =================================================================== */
+const POP_DATA_NZENG = [
+  [-2.5,-18.571],[8.75,-14.952],[15,-16.857],[5,-18],[30,-12.857],
+  [3.75,-18.762],[0,-19.714],[10,-13.238],[12.5,-16.286],[12.5,-18.19],
+  [12.5,-12.857],[13.75,-16.286],[12.5,-18],[2.5,-16.286],[20,-15.524],
+  [26.25,-14.571],[62.5,-6.476],[13.75,-19.524],[40,-12.19],[31.25,-15.524],
+  [27.5,-15.714],[1.25,-16.286],[21.25,-14.762],[27.5,-16.667],
+  [16.25,-16.476],[60,-14.19],[5,-18.571],[0,-17.048],[11.25,-14.381],
+  [15,-14.762],[13.75,-18.762],[18.75,-16.857],[5,-18.952],[37.5,-14.762],
+  [37.5,-14.381],[37.5,-14.762],[6.25,-17.81],[20,-16.095],[41.25,-14],
+  [53.75,-14.667],[85,-9.429],[7.5,-18.571],[45,-13.81],[16.25,-15.905],
+  [10,-16.095],[52.5,-11.429],[60,-14.19],[36.25,-15.333],[8.75,-18],
+  [17.5,-15.524],[22.5,-12.19],[37.5,-14],[5,-17.238],[-2.5,-20.095],
+  [2.5,-17.429],[7.5,-17.619],[10,-19.524],[11.25,-17.619],[0,-18.19],
+  [2.5,-15.524],[10,-16.667],[12.5,-16.667],[7.5,-18.762],[11.25,-17.429],
+  [11.25,-19.333],[11.25,-20.286],[-3.75,-17.81],[-3.75,-17.429],
+  [25,-15.524],[15,-17.619],[10,-17.81],[-2.5,-17.429],[16.25,-18.762],
+  [7.5,-19.333],[3.75,-19.714],[11.25,-16.476],[22.5,-14.571],
+  [6.25,-19.905],[10,-17.238],[3.75,-18.286],[7.5,-16.667],[2.5,-16.095],
+  [5,-17.619],[5,-16.286],[-2.5,-18.381],[2.5,-17.619],[17.5,-19.143],
+  [27.5,-17.619],[12.5,-17.81],[8.75,-18.952],[5,-14.952],[8.75,-17.619],
+  [15,-15.143],[6.25,-16.476],[13.75,-19.143],[27.5,-16.286],[6.25,-18.19],
+  [5,-15.905],[18.75,-14.952],[25,-18.381],[36.25,-17.048],[113.75,-10.857],
+  [38.75,-14.571],[16.25,-15.905],[-3.75,-16.286],[13.75,-18],
+  [107.5,-9.905],[17.5,-19.333],[73.75,-6.667],[23.75,-17.81],
+  [56.25,-9.5],[30,-15],[8.75,-14.7],[5,-19.6],[5,-18.3],[6.25,-18.9],
+  [35,-17],[1.25,-18.3],[10,-17.9],[16.25,-15.6],[40,-13.9],[35,-12.2],
+  [11.25,-17.3],[12.5,-9],[1.25,-19],[6.25,-18.7],[17.5,-18.9],
+  [31.25,-13.9],[56.25,-11.2],[40,-15.2],[8.75,-18.7],[41.25,-10.5],
+  [20,-16.6],[22.5,-16.2],[80,-9],[3.75,-17.1],[6.25,-18.1],[1.25,-18.5],
+  [7.5,-18.5],[3.75,-17.3],[16.25,-18.1],[47.5,-7.2],[5,-17.1],
+  [36.25,-13.3],[41.25,-15.6],[7.5,-19],[28.75,-14.5],[37.5,-14.7],
+  [37.5,-14.1],[52.5,-15.6],[75,-3.8],[73.75,-9.3],[7.5,-18.7],
+  [36.25,-13.1],[15,-14.9],[21.25,-15.4],[11.25,-17.9],[11.25,-18.7],
+  [20,-17.7],[42.5,-12],[2.5,-15.6]
+];
+
+/* Placeholder for te reo Māori population data */
+const POP_DATA_MAORI = null; // Will be populated later
+
+/* Default cut-offs */
+const DEFAULT_HL_CUTOFF = 25;
+const DEFAULT_SRT_CUTOFF = -15.9;
+
+/* ===================================================================
+   PROGRESSIVE REVEAL SYSTEM
+   =================================================================== */
+function revealSection(n) {
+  const secs = document.querySelectorAll('.lab-section');
+  secs.forEach(s => {
+    const sn = parseInt(s.dataset.section);
+    if (sn <= n) {
+      s.classList.add('visible');
+      // trigger animation after display:block
+      requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add('revealed')));
+    }
+  });
+  // scroll into view
+  const target = document.querySelector(`[data-section="${n}"]`);
+  if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+window.revealNext = function(currentSection) {
+  revealSection(currentSection + 1);
+};
+
+// Show section 1 on load
+window.addEventListener('DOMContentLoaded', () => {
+  revealSection(1);
+});
+
+/* ===================================================================
+   TONE PLAYBACK
+   =================================================================== */
+let toneCtx = null;
+window.playTone = function(freq, btn) {
+  if (!toneCtx) toneCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (toneCtx.state === 'suspended') toneCtx.resume();
+
+  btn.classList.add('playing');
+  const osc = toneCtx.createOscillator();
+  const gain = toneCtx.createGain();
+  osc.frequency.value = freq;
+  osc.type = 'sine';
+  gain.gain.setValueAtTime(0, toneCtx.currentTime);
+  gain.gain.linearRampToValueAtTime(0.15, toneCtx.currentTime + 0.05);
+  gain.gain.linearRampToValueAtTime(0.15, toneCtx.currentTime + 0.85);
+  gain.gain.linearRampToValueAtTime(0, toneCtx.currentTime + 1.0);
+  osc.connect(gain);
+  gain.connect(toneCtx.destination);
+  osc.start();
+  osc.stop(toneCtx.currentTime + 1.0);
+  setTimeout(() => btn.classList.remove('playing'), 1050);
+};
+
+/* ===================================================================
+   UTILITY: Compute sens, spec, etc at given cut-offs
+   =================================================================== */
+function computeMetrics(data, hlCut, srtCut) {
+  let tp=0, tn=0, fp=0, fn=0;
+  for (const [hl, srt] of data) {
+    const hasCondition = hl > hlCut;
+    const testRefers = srt > srtCut;  // less negative = worse = refer
+    if (hasCondition && testRefers) tp++;
+    else if (hasCondition && !testRefers) fn++;
+    else if (!hasCondition && testRefers) fp++;
+    else tn++;
+  }
+  const sens = (tp + fn) > 0 ? tp / (tp + fn) : 0;
+  const spec = (tn + fp) > 0 ? tn / (tn + fp) : 0;
+  const acc = data.length > 0 ? (tp + tn) / data.length : 0;
+  return { tp, tn, fp, fn, sens, spec, acc };
+}
+
+/* ===================================================================
+   CHART INSTANCES (stored for updates)
+   =================================================================== */
+let chartScatter1 = null;
+let chartQuadrant = null;
+let chartSensExplore = null;
+let chartSpecExplore = null;
+let chartCombined = null;
+let chartROC = null;
+let chartAdaptive = null;
+let chartFinalScatter = null;
+
+/* Track slider-drawn points for explore charts */
+let sensExplorePoints = [];
+let specExplorePoints = [];
+
+/* ===================================================================
+   SECTION 9a: Simple scatter
+   =================================================================== */
+function initScatter1() {
+  const ctx = document.getElementById('chart-scatter1').getContext('2d');
+  chartScatter1 = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Participants',
+        data: POP_DATA_NZENG.map(([x, y]) => ({x, y})),
+        backgroundColor: 'rgba(44, 120, 70, 0.5)',
+        borderColor: 'rgba(44, 120, 70, 0.7)',
+        pointRadius: 4,
+        pointHoverRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 1.4,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `4FA: ${ctx.parsed.x} dB HL, SRT: ${ctx.parsed.y.toFixed(1)} dB SNR`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Poorer-ear 4FA (0.5, 1, 2, 4 kHz) — dB HL', font: { family: 'DM Sans', size: 13, weight: '600' } },
+          min: -10, max: 120
+        },
+        y: {
+          title: { display: true, text: 'SRT (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } },
+          min: -22, max: 5
+        }
+      }
+    }
+  });
+}
+
+/* ===================================================================
+   SECTION 9b: Quadrant chart with sliders
+   =================================================================== */
+function initQuadrantChart() {
+  const ctx = document.getElementById('chart-quadrant').getContext('2d');
+  chartQuadrant = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'True Positive', data: [], backgroundColor: 'rgba(192, 57, 43, 0.7)', pointRadius: 5 },
+        { label: 'True Negative', data: [], backgroundColor: 'rgba(45, 138, 78, 0.7)', pointRadius: 5 },
+        { label: 'False Positive', data: [], backgroundColor: 'rgba(230, 126, 34, 0.7)', pointRadius: 5 },
+        { label: 'False Negative', data: [], backgroundColor: 'rgba(241, 196, 15, 0.7)', pointRadius: 5 }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      aspectRatio: 1.4,
+      plugins: {
+        legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 } } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `4FA: ${ctx.parsed.x} dB HL, SRT: ${ctx.parsed.y.toFixed(1)} dB SNR`
+          }
+        }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: 'Poorer-ear 4FA — dB HL', font: { family: 'DM Sans', size: 13, weight: '600' } },
+          min: -10, max: 120
+        },
+        y: {
+          title: { display: true, text: 'SRT (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } },
+          min: -22, max: 5
+        }
+      },
+      // Custom plugin for dashed cut-off lines
+      animation: { duration: 200 }
+    },
+    plugins: [{
+      id: 'cutoffLines',
+      afterDraw(chart) {
+        const hlCut = parseFloat(document.getElementById('slider-hl').value);
+        const srtCut = parseFloat(document.getElementById('slider-srt').value);
+        const { ctx: c, chartArea: {left, right, top, bottom}, scales: {x, y} } = chart;
+
+        // Vertical line at HL cut-off
+        const xPos = x.getPixelForValue(hlCut);
+        c.save();
+        c.strokeStyle = '#555';
+        c.lineWidth = 2;
+        c.setLineDash([6, 4]);
+        c.beginPath();
+        c.moveTo(xPos, top);
+        c.lineTo(xPos, bottom);
+        c.stroke();
+
+        // Horizontal line at SRT cut-off
+        const yPos = y.getPixelForValue(srtCut);
+        c.beginPath();
+        c.moveTo(left, yPos);
+        c.lineTo(right, yPos);
+        c.stroke();
+        c.restore();
+
+        // Quadrant labels
+        c.save();
+        c.font = '11px DM Sans';
+        c.fillStyle = '#888';
+        c.textAlign = 'center';
+        c.fillText('FALSE POS', (left + xPos) / 2, top + 16);
+        c.fillText('TRUE POS', (xPos + right) / 2, top + 16);
+        c.fillText('TRUE NEG', (left + xPos) / 2, bottom - 8);
+        c.fillText('FALSE NEG', (xPos + right) / 2, bottom - 8);
+        c.restore();
+      }
+    }]
+  });
+  updateQuadrantChart();
+}
+
+window.updateQuadrantChart = function() {
+  const hlCut = parseFloat(document.getElementById('slider-hl').value);
+  const srtCut = parseFloat(document.getElementById('slider-srt').value);
+  document.getElementById('val-hl').textContent = hlCut + ' dB HL';
+  document.getElementById('val-srt').textContent = srtCut.toFixed(1) + ' dB SNR';
+
+  const tp=[], tn=[], fp=[], fn=[];
+  for (const [hl, srt] of POP_DATA_NZENG) {
+    const hasCondition = hl > hlCut;
+    const testRefers = srt > srtCut;
+    const pt = {x: hl, y: srt};
+    if (hasCondition && testRefers) tp.push(pt);
+    else if (!hasCondition && !testRefers) tn.push(pt);
+    else if (!hasCondition && testRefers) fp.push(pt);
+    else fn.push(pt);
+  }
+  chartQuadrant.data.datasets[0].data = tp;
+  chartQuadrant.data.datasets[1].data = tn;
+  chartQuadrant.data.datasets[2].data = fp;
+  chartQuadrant.data.datasets[3].data = fn;
+  chartQuadrant.update('none');
+
+  document.getElementById('stat-tp').textContent = tp.length;
+  document.getElementById('stat-tn').textContent = tn.length;
+  document.getElementById('stat-fp').textContent = fp.length;
+  document.getElementById('stat-fn').textContent = fn.length;
+
+  // Also update sensitivity/specificity if visible
+  const m = computeMetrics(POP_DATA_NZENG, hlCut, srtCut);
+  document.getElementById('stat-sens').textContent = (m.sens * 100).toFixed(1) + '%';
+  document.getElementById('stat-spec').textContent = (m.spec * 100).toFixed(1) + '%';
+  document.getElementById('stat-acc').textContent = (m.acc * 100).toFixed(1) + '%';
+};
+
+/* ===================================================================
+   SECTION 9e: Sensitivity explorer
+   =================================================================== */
+function initSensExploreChart() {
+  sensExplorePoints = [];
+  const ctx = document.getElementById('chart-sens-explore').getContext('2d');
+  chartSensExplore = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Sensitivity',
+        data: [],
+        showLine: true,
+        borderColor: 'rgba(45, 138, 78, 1)',
+        backgroundColor: 'rgba(45, 138, 78, 0.1)',
+        fill: true,
+        pointRadius: 0,
+        borderWidth: 2.5,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1.6,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 0 },
+        y: { title: { display: true, text: 'Sensitivity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.05 }
+      }
+    },
+    plugins: [{
+      id: 'vertLine',
+      afterDraw(chart) {
+        const val = parseFloat(document.getElementById('slider-sens-explore').value);
+        const { ctx: c, chartArea: {top, bottom}, scales: {x} } = chart;
+        const px = x.getPixelForValue(val);
+        c.save();
+        c.strokeStyle = 'rgba(45, 138, 78, 0.6)';
+        c.lineWidth = 1.5;
+        c.setLineDash([4, 3]);
+        c.beginPath(); c.moveTo(px, top); c.lineTo(px, bottom); c.stroke();
+        c.restore();
+      }
+    }]
+  });
+}
+
+window.updateSensExplore = function() {
+  const val = parseFloat(document.getElementById('slider-sens-explore').value);
+  document.getElementById('val-sens-explore').textContent = val.toFixed(1) + ' dB SNR';
+  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
+  document.getElementById('stat-sens-ex').textContent = (m.sens * 100).toFixed(1) + '%';
+
+  // Add point if not already close
+  const last = sensExplorePoints[sensExplorePoints.length - 1];
+  if (!last || Math.abs(last.x - val) > 0.15) {
+    sensExplorePoints.push({ x: val, y: m.sens });
+    sensExplorePoints.sort((a, b) => a.x - b.x);
+  }
+  chartSensExplore.data.datasets[0].data = [...sensExplorePoints];
+  chartSensExplore.update('none');
+};
+
+/* ===================================================================
+   SECTION 9f: Specificity explorer
+   =================================================================== */
+function initSpecExploreChart() {
+  specExplorePoints = [];
+  const ctx = document.getElementById('chart-spec-explore').getContext('2d');
+  chartSpecExplore = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'Specificity',
+        data: [],
+        showLine: true,
+        borderColor: 'rgba(36, 113, 163, 1)',
+        backgroundColor: 'rgba(36, 113, 163, 0.1)',
+        fill: true,
+        pointRadius: 0,
+        borderWidth: 2.5,
+        tension: 0.1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1.6,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 0 },
+        y: { title: { display: true, text: 'Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.05 }
+      }
+    },
+    plugins: [{
+      id: 'vertLine',
+      afterDraw(chart) {
+        const val = parseFloat(document.getElementById('slider-spec-explore').value);
+        const { ctx: c, chartArea: {top, bottom}, scales: {x} } = chart;
+        const px = x.getPixelForValue(val);
+        c.save();
+        c.strokeStyle = 'rgba(36, 113, 163, 0.6)';
+        c.lineWidth = 1.5;
+        c.setLineDash([4, 3]);
+        c.beginPath(); c.moveTo(px, top); c.lineTo(px, bottom); c.stroke();
+        c.restore();
+      }
+    }]
+  });
+}
+
+window.updateSpecExplore = function() {
+  const val = parseFloat(document.getElementById('slider-spec-explore').value);
+  document.getElementById('val-spec-explore').textContent = val.toFixed(1) + ' dB SNR';
+  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
+  document.getElementById('stat-spec-ex').textContent = (m.spec * 100).toFixed(1) + '%';
+
+  const last = specExplorePoints[specExplorePoints.length - 1];
+  if (!last || Math.abs(last.x - val) > 0.15) {
+    specExplorePoints.push({ x: val, y: m.spec });
+    specExplorePoints.sort((a, b) => a.x - b.x);
+  }
+  chartSpecExplore.data.datasets[0].data = [...specExplorePoints];
+  chartSpecExplore.update('none');
+};
+
+/* ===================================================================
+   SECTION 9g: Combined sens + spec + Youden
+   =================================================================== */
+function initCombinedChart() {
+  // Pre-compute full curves
+  const sensData = [], specData = [], youdenData = [];
+  for (let co = -22; co <= 0; co += 0.2) {
+    const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
+    sensData.push({ x: co, y: m.sens });
+    specData.push({ x: co, y: m.spec });
+    youdenData.push({ x: co, y: m.sens + m.spec - 1 });
+  }
+
+  const ctx = document.getElementById('chart-combined').getContext('2d');
+  chartCombined = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Sensitivity', data: sensData, showLine: true, borderColor: '#2d8a4e', pointRadius: 0, borderWidth: 2.5, tension: 0.1 },
+        { label: 'Specificity', data: specData, showLine: true, borderColor: '#e67e22', pointRadius: 0, borderWidth: 2.5, tension: 0.1 },
+        { label: "Youden's J", data: youdenData, showLine: true, borderColor: '#aaa', pointRadius: 0, borderWidth: 1.5, borderDash: [4, 3], tension: 0.1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1.6,
+      plugins: { legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 } } } },
+      scales: {
+        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 0 },
+        y: { title: { display: true, text: 'Sensitivity / Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -0.1, max: 1.05 }
+      }
+    },
+    plugins: [{
+      id: 'vertLine',
+      afterDraw(chart) {
+        const val = parseFloat(document.getElementById('slider-combined').value);
+        const { ctx: c, chartArea: {top, bottom}, scales: {x} } = chart;
+        const px = x.getPixelForValue(val);
+        c.save();
+        c.strokeStyle = '#333';
+        c.lineWidth = 1.5;
+        c.setLineDash([5, 4]);
+        c.beginPath(); c.moveTo(px, top); c.lineTo(px, bottom); c.stroke();
+        c.restore();
+      }
+    }]
+  });
+  updateCombinedChart();
+}
+
+window.updateCombinedChart = function() {
+  const val = parseFloat(document.getElementById('slider-combined').value);
+  document.getElementById('val-combined').textContent = val.toFixed(1) + ' dB SNR';
+  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
+  document.getElementById('stat-comb-sens').textContent = (m.sens * 100).toFixed(1) + '%';
+  document.getElementById('stat-comb-spec').textContent = (m.spec * 100).toFixed(1) + '%';
+  document.getElementById('stat-comb-j').textContent = (m.sens + m.spec - 1).toFixed(3);
+  chartCombined.update('none');
+};
+
+/* ===================================================================
+   SECTION 9h: ROC curve
+   =================================================================== */
+function initROCChart() {
+  // Compute ROC points
+  const rocPoints = [];
+  let bestJ = -1, bestCo = 0, bestSens = 0, bestSpec = 0;
+  for (let co = -22; co <= 0; co += 0.1) {
+    const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
+    rocPoints.push({ x: 1 - m.spec, y: m.sens });
+    const j = m.sens + m.spec - 1;
+    if (j > bestJ) { bestJ = j; bestCo = co; bestSens = m.sens; bestSpec = m.spec; }
+  }
+  rocPoints.sort((a, b) => a.x - b.x);
+
+  // AUC by trapezoidal rule
+  let auc = 0;
+  for (let i = 1; i < rocPoints.length; i++) {
+    const dx = rocPoints[i].x - rocPoints[i-1].x;
+    const avgY = (rocPoints[i].y + rocPoints[i-1].y) / 2;
+    auc += dx * avgY;
+  }
+
+  const ctx = document.getElementById('chart-roc').getContext('2d');
+  chartROC = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        {
+          label: `Test SRT vs 4FA > 25 dB HL (AUC=${auc.toFixed(2)})`,
+          data: rocPoints, showLine: true,
+          borderColor: '#1a5276', backgroundColor: 'rgba(26, 82, 118, 0.08)',
+          fill: true, pointRadius: 0, borderWidth: 2.5, tension: 0
+        },
+        {
+          label: `Youden optimum: ${bestCo.toFixed(1)} dB SNR`,
+          data: [{ x: 1 - bestSpec, y: bestSens }],
+          backgroundColor: '#e67e22', borderColor: '#c0392b',
+          pointRadius: 8, pointStyle: 'rectRot'
+        },
+        {
+          label: 'Chance',
+          data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+          showLine: true, borderColor: '#ccc', borderDash: [4, 3],
+          pointRadius: 0, borderWidth: 1
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1.2,
+      plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 } } } },
+      scales: {
+        x: { title: { display: true, text: '1 − Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1 },
+        y: { title: { display: true, text: 'Sensitivity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.02 }
+      }
+    }
+  });
+
+  document.getElementById('stat-auc').textContent = auc.toFixed(2);
+  document.getElementById('stat-optimal-co').textContent = bestCo.toFixed(1) + ' dB';
+  document.getElementById('stat-opt-sens').textContent = (bestSens * 100).toFixed(0) + '%';
+  document.getElementById('stat-opt-spec').textContent = (bestSpec * 100).toFixed(0) + '%';
+}
+
+/* ===================================================================
+   SECTION 9 SUB-SECTION REVEALS
+   =================================================================== */
+window.showSec9b = function() {
+  document.getElementById('sec9b').style.display = 'block';
+  initQuadrantChart();
+  document.getElementById('sec9b').scrollIntoView({ behavior: 'smooth' });
+};
+window.showSec9c = function() {
+  document.getElementById('sec9c').style.display = 'block';
+  // Trigger initial calculation
+  updateQuadrantChart();
+  document.getElementById('sec9c').scrollIntoView({ behavior: 'smooth' });
+};
+window.showSec9d = function() {
+  document.getElementById('sec9d').style.display = 'block';
+  document.getElementById('sec9d').scrollIntoView({ behavior: 'smooth' });
+};
+window.showSec9e = function() {
+  document.getElementById('sec9e').style.display = 'block';
+  initSensExploreChart();
+  document.getElementById('sec9e').scrollIntoView({ behavior: 'smooth' });
+};
+window.showSec9f = function() {
+  document.getElementById('sec9f').style.display = 'block';
+  initSpecExploreChart();
+  document.getElementById('sec9f').scrollIntoView({ behavior: 'smooth' });
+};
+window.showSec9g = function() {
+  document.getElementById('sec9g').style.display = 'block';
+  initCombinedChart();
+  document.getElementById('sec9g').scrollIntoView({ behavior: 'smooth' });
+};
+window.showSec9h = function() {
+  document.getElementById('sec9h').style.display = 'block';
+  initROCChart();
+  document.getElementById('sec9h').scrollIntoView({ behavior: 'smooth' });
+};
+
+/* ===================================================================
+   MULTICHOICE
+   =================================================================== */
+window.answerMC = function(btn, isCorrect) {
+  const siblings = btn.parentElement.querySelectorAll('.mc-option');
+  siblings.forEach(s => { s.disabled = true; s.style.pointerEvents = 'none'; });
+  const fb = document.getElementById('mc-fb-9d');
+  if (isCorrect) {
+    btn.classList.add('correct');
+    // Also highlight the correct one
+    siblings.forEach(s => { if (s.dataset.correct) s.classList.add('correct'); });
+    fb.className = 'mc-feedback show correct-fb';
+    fb.textContent = "That's right! In practice, we want a test that does a good job of both detecting the condition and avoiding false alarms. The Youden index helps us find this optimal balance.";
+  } else {
+    btn.classList.add('incorrect');
+    siblings.forEach(s => { if (s.dataset.correct) s.classList.add('correct'); });
+    fb.className = 'mc-feedback show incorrect-fb';
+    fb.textContent = "Not quite. While maximising sensitivity or specificity alone is sometimes important, for most screening purposes we want the best trade-off between catching true cases and avoiding false alarms. Option C is the best answer — the Youden index helps us find this balance.";
+  }
+  fb.style.display = 'block';
+  document.getElementById('sec9d-continue').style.display = 'block';
+};
+
+/* ===================================================================
+   INIT CHARTS WHEN SECTION 9 REVEALS
+   =================================================================== */
+const section9Observer = new MutationObserver(() => {
+  const sec = document.getElementById('sec-sensspec');
+  if (sec.classList.contains('visible') && !chartScatter1) {
+    initScatter1();
+  }
+});
+section9Observer.observe(document.getElementById('sec-sensspec'), { attributes: true, attributeFilter: ['class'] });
+
+/* ===================================================================
+   SECTION 10: CSV HANDLING
+   =================================================================== */
+window.showSec10b = function() {
+  document.getElementById('sec10b').style.display = 'block';
+  document.getElementById('sec10b').scrollIntoView({ behavior: 'smooth' });
+};
+
+// Drag & drop
+const dropZone = document.getElementById('csv-drop');
+if (dropZone) {
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) handleCSV(file);
+  });
+}
+
+window.handleCSV = function(file) {
+  if (!file) return;
+  const errEl = document.getElementById('csv-error');
+  errEl.style.display = 'none';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      parseAndDisplay(e.target.result, file.name);
+    } catch (ex) {
+      errEl.textContent = 'Error parsing CSV: ' + ex.message;
+      errEl.style.display = 'block';
+    }
+  };
+  reader.readAsText(file);
+};
+
+function parseAndDisplay(csvText, fileName) {
+  // Parse CSV
+  const lines = csvText.trim().replace(/\r/g, '').split('\n');
+  const header = lines[0].replace(/"/g, '').split(',');
+  const trials = [];
+  for (let i = 1; i < lines.length; i++) {
+    const cols = lines[i].replace(/"/g, '').split(',');
+    if (cols.length < 5) continue;
+    const trialNum = parseInt(cols[0]);
+    const dbSignal = parseInt(cols[1]);
+    const correctAns = cols[2];
+    const partAns = cols[3];
+    const correct = cols[4].trim().toLowerCase() === 'true';
+    // Skip the null/empty final trial
+    if (correctAns === '' || partAns === 'null') continue;
+    trials.push({ trialNum, dbSignal, correctAns, partAns, correct });
+  }
+
+  if (trials.length < 10) throw new Error('Not enough valid trials found in the file.');
+
+  // Detect language from filename (placeholder — Māori files will have different naming)
+  const isMaori = /maori|reo|mri/i.test(fileName);
+  const popData = (isMaori && POP_DATA_MAORI) ? POP_DATA_MAORI : POP_DATA_NZENG;
+  const srtCutoff = DEFAULT_SRT_CUTOFF; // May differ for Māori later
+
+  // Calculate SRT: average of decibels_signal from trial 7 onward (0-indexed: trials[7..end])
+  const srtTrials = trials.filter(t => t.trialNum >= 7);
+  const srt = srtTrials.reduce((s, t) => s + t.dbSignal, 0) / srtTrials.length;
+
+  // Build trial table
+  const tbody = document.querySelector('#trial-table tbody');
+  tbody.innerHTML = '';
+  for (const t of trials) {
+    const tr = document.createElement('tr');
+    if (t.trialNum < 7) tr.classList.add('excluded');
+    tr.classList.add(t.correct ? 'correct-row' : 'incorrect-row');
+    tr.innerHTML = `
+      <td>${t.trialNum + 1}</td>
+      <td>${t.dbSignal}</td>
+      <td>${t.correctAns}</td>
+      <td>${t.partAns}</td>
+      <td>${t.correct ? '✓' : '✗'}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+
+  // SRT display
+  document.getElementById('stat-your-srt').textContent = srt.toFixed(1) + ' dB SNR';
+  document.getElementById('stat-cutoff-display').textContent = srtCutoff.toFixed(1) + ' dB SNR';
+
+  // Pass/Refer
+  const passed = srt <= srtCutoff;
+  const banner = document.getElementById('result-banner');
+  banner.className = 'result-banner ' + (passed ? 'pass' : 'refer');
+  banner.innerHTML = passed
+    ? `✅ <strong>PASS</strong> — Your SRT of ${srt.toFixed(1)} dB SNR is at or below the cut-off of ${srtCutoff.toFixed(1)} dB SNR.`
+    : `🔴 <strong>REFER</strong> — Your SRT of ${srt.toFixed(1)} dB SNR is above the cut-off of ${srtCutoff.toFixed(1)} dB SNR. This suggests further hearing assessment may be warranted.`;
+
+  // Adaptive track chart
+  initAdaptiveChart(trials);
+
+  // Final scatter chart
+  initFinalScatter(popData, srt, srtCutoff, passed);
+
+  // Show results
+  document.getElementById('results-area').style.display = 'block';
+  setTimeout(() => document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+}
+
+function initAdaptiveChart(trials) {
+  if (chartAdaptive) chartAdaptive.destroy();
+  const correctPts = trials.filter(t => t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
+  const incorrectPts = trials.filter(t => !t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
+  const allPts = trials.map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
+
+  const ctx = document.getElementById('chart-adaptive').getContext('2d');
+  chartAdaptive = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Adaptive track', data: allPts, showLine: true, borderColor: '#999', pointRadius: 0, borderWidth: 1.5, tension: 0 },
+        { label: 'Correct', data: correctPts, backgroundColor: '#2d8a4e', pointRadius: 6, pointStyle: 'circle' },
+        { label: 'Incorrect', data: incorrectPts, backgroundColor: '#c0392b', pointRadius: 6, pointStyle: 'circle' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1.8,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        x: { title: { display: true, text: 'Trial', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: trials.length + 1 },
+        y: { title: { display: true, text: 'Signal level (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } } }
+      }
+    },
+    plugins: [{
+      id: 'excludedZone',
+      afterDraw(chart) {
+        const { ctx: c, chartArea: {left, top, bottom}, scales: {x} } = chart;
+        const x7 = x.getPixelForValue(7.5);
+        c.save();
+        c.fillStyle = 'rgba(0,0,0,0.04)';
+        c.fillRect(left, top, x7 - left, bottom - top);
+        c.strokeStyle = '#999';
+        c.lineWidth = 1;
+        c.setLineDash([3, 3]);
+        c.beginPath(); c.moveTo(x7, top); c.lineTo(x7, bottom); c.stroke();
+        c.font = '11px DM Sans';
+        c.fillStyle = '#999';
+        c.textAlign = 'center';
+        c.fillText('excluded', (left + x7) / 2, top + 14);
+        c.restore();
+      }
+    }]
+  });
+}
+
+function initFinalScatter(popData, studentSRT, srtCutoff, passed) {
+  if (chartFinalScatter) chartFinalScatter.destroy();
+
+  // Separate pass/refer in population data
+  const popPass = popData.filter(([hl, srt]) => srt <= srtCutoff).map(([x, y]) => ({x, y}));
+  const popRefer = popData.filter(([hl, srt]) => srt > srtCutoff).map(([x, y]) => ({x, y}));
+
+  const ctx = document.getElementById('chart-final-scatter').getContext('2d');
+  chartFinalScatter = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [
+        { label: 'Pass', data: popPass, backgroundColor: 'rgba(45, 138, 78, 0.45)', borderColor: 'rgba(45, 138, 78, 0.6)', pointRadius: 4 },
+        { label: 'Refer', data: popRefer, backgroundColor: 'rgba(192, 57, 43, 0.45)', borderColor: 'rgba(192, 57, 43, 0.6)', pointRadius: 4, pointStyle: 'rectRot' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: true, aspectRatio: 1.4,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        x: { title: { display: true, text: 'Poorer-ear 4FA (0.5, 1, 2, 4 kHz) — dB HL', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -10, max: 120 },
+        y: { title: { display: true, text: 'SRT (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -25, max: 5 }
+      }
+    },
+    plugins: [{
+      id: 'studentLine',
+      afterDraw(chart) {
+        const { ctx: c, chartArea: {left, right, top, bottom}, scales: {x, y} } = chart;
+        c.save();
+
+        // SRT cut-off line
+        const yco = y.getPixelForValue(srtCutoff);
+        c.strokeStyle = '#999';
+        c.lineWidth = 1.5;
+        c.setLineDash([6, 4]);
+        c.beginPath(); c.moveTo(left, yco); c.lineTo(right, yco); c.stroke();
+        c.font = '11px DM Sans';
+        c.fillStyle = '#666';
+        c.textAlign = 'right';
+        c.fillText(`${srtCutoff.toFixed(1)} dB SNR cut-off`, right - 4, yco - 6);
+
+        // 25 dB HL cut-off
+        const xco = x.getPixelForValue(DEFAULT_HL_CUTOFF);
+        c.beginPath(); c.moveTo(xco, top); c.lineTo(xco, bottom); c.stroke();
+        c.textAlign = 'center';
+        c.fillText(`${DEFAULT_HL_CUTOFF} dB HL`, xco, bottom + 16);
+
+        // Student SRT line
+        const ystu = y.getPixelForValue(studentSRT);
+        c.strokeStyle = passed ? '#2d8a4e' : '#c0392b';
+        c.lineWidth = 3;
+        c.setLineDash([8, 5]);
+        c.beginPath(); c.moveTo(left, ystu); c.lineTo(right, ystu); c.stroke();
+        c.font = 'bold 13px DM Sans';
+        c.fillStyle = passed ? '#2d8a4e' : '#c0392b';
+        c.textAlign = 'left';
+        c.fillText(`Your SRT: ${studentSRT.toFixed(1)} dB SNR`, left + 8, ystu - 8);
+
+        c.restore();
+      }
+    }]
+  });
+}
+
+})();
+</script>
+
+</body>
+</html>
