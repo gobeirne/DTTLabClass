@@ -426,7 +426,54 @@ body {
 @media (max-width: 600px) {
   .lab-section { padding: 20px 18px; }
   .lab-header { flex-direction: column; text-align: center; }
-  .stats-row { flex-direction: column; }
+
+  /* Quadrant chart: taller on mobile */
+  #chart-quadrant { min-height: 300px; }
+
+  /* 2x2 compact grid for TP/TN/FP/FN on mobile */
+  .quad-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .quad-grid .stat-card {
+    min-width: unset;
+    padding: 8px 10px;
+  }
+  .quad-grid .stat-card .stat-value {
+    font-size: 1.2rem;
+  }
+  .quad-grid .stat-card .stat-label {
+    font-size: 0.7rem;
+  }
+
+  /* Sens/Spec/Acc row: 3-col grid on mobile */
+  .sens-spec-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .sens-spec-grid .stat-card {
+    min-width: unset;
+    padding: 8px 6px;
+  }
+  .sens-spec-grid .stat-card .stat-value {
+    font-size: 1rem;
+  }
+  .sens-spec-grid .stat-card .stat-label {
+    font-size: 0.65rem;
+  }
+
+  /* Other stats rows stay stacked */
+  .stats-row:not(.quad-grid):not(.sens-spec-grid) {
+    flex-direction: column;
+  }
+
+  /* Slider value display: bigger on mobile for readability */
+  .slider-val {
+    font-size: 1rem;
+    min-width: 100px;
+  }
 }
 </style>
 </head>
@@ -625,14 +672,14 @@ body {
 
         <div class="chart-wrap"><canvas id="chart-quadrant"></canvas></div>
 
-        <div class="stats-row" id="quad-stats">
-          <div class="stat-card red"><span class="stat-label">True Positives</span><div class="stat-value" id="stat-tp">—</div></div>
-          <div class="stat-card green"><span class="stat-label">True Negatives</span><div class="stat-value" id="stat-tn">—</div></div>
-          <div class="stat-card orange"><span class="stat-label">False Positives</span><div class="stat-value" id="stat-fp">—</div></div>
-          <div class="stat-card orange"><span class="stat-label">False Negatives</span><div class="stat-value" id="stat-fn">—</div></div>
+        <div class="stats-row quad-grid" id="quad-stats">
+          <div class="stat-card red"><span class="stat-label">True Pos</span><div class="stat-value" id="stat-tp">—</div></div>
+          <div class="stat-card green"><span class="stat-label">True Neg</span><div class="stat-value" id="stat-tn">—</div></div>
+          <div class="stat-card orange"><span class="stat-label">False Pos</span><div class="stat-value" id="stat-fp">—</div></div>
+          <div class="stat-card orange"><span class="stat-label">False Neg</span><div class="stat-value" id="stat-fn">—</div></div>
         </div>
 
-        <div class="stats-row" id="quad-sens-spec-stats" style="display:none;">
+        <div class="stats-row sens-spec-grid" id="quad-sens-spec-stats" style="display:none;">
           <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-sens-9b">—</div></div>
           <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-spec-9b">—</div></div>
           <div class="stat-card"><span class="stat-label">Accuracy</span><div class="stat-value" id="stat-acc-9b">—</div></div>
@@ -1091,9 +1138,9 @@ function initQuadrantChart() {
     options: {
       responsive: true,
       maintainAspectRatio: true,
-      aspectRatio: 1.4,
+      aspectRatio: window.innerWidth <= 600 ? 0.9 : 1.4,
       plugins: {
-        legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 } } },
+        legend: { display: window.innerWidth > 600, position: 'top', labels: { font: { family: 'DM Sans', size: 12 } } },
         tooltip: {
           callbacks: {
             label: (ctx) => `4FA: ${ctx.parsed.x} dB HL, SRT: ${ctx.parsed.y.toFixed(1)} dB SNR`
@@ -1702,8 +1749,9 @@ function parseAndDisplay(csvText, fileName) {
 function initAdaptiveChart(trials, srt) {
   if (chartAdaptive) chartAdaptive.destroy();
 
-  // Null trial: keep in track line but exclude from correct/incorrect dots
+  // Null trial: keep in track line, show as grey dot, exclude from correct/incorrect
   const nonNullTrials = trials.filter(t => t.correctAns !== '—' && t.partAns !== '—');
+  const nullTrialPts = trials.filter(t => t.correctAns === '—' || t.partAns === '—').map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
   const correctPts = nonNullTrials.filter(t => t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
   const incorrectPts = nonNullTrials.filter(t => !t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
   const allPts = trials.map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
@@ -1719,6 +1767,7 @@ function initAdaptiveChart(trials, srt) {
         { label: 'Adaptive track', data: allPts, showLine: true, borderColor: '#999', pointRadius: 0, borderWidth: 1.5, tension: 0 },
         { label: 'Correct', data: correctPts, backgroundColor: '#2d8a4e', pointRadius: 6, pointStyle: 'circle' },
         { label: 'Incorrect', data: incorrectPts, backgroundColor: '#c0392b', pointRadius: 6, pointStyle: 'circle' },
+        { label: 'No response (phantom)', data: nullTrialPts, backgroundColor: '#aaa', borderColor: '#888', pointRadius: 6, pointStyle: 'circle', borderWidth: 1 },
         { label: `SRT = ${srt.toFixed(1)} dB SNR`, data: srtLine, showLine: true, borderColor: '#2471a3', borderWidth: 4, pointRadius: 0, borderDash: [] }
       ]
     },
@@ -1807,8 +1856,8 @@ function initFinalScatter(popData, studentSRT, srtCutoff, passed) {
         c.beginPath(); c.moveTo(left, ystu); c.lineTo(right, ystu); c.stroke();
         c.font = 'bold 13px DM Sans';
         c.fillStyle = passed ? '#2d8a4e' : '#c0392b';
-        c.textAlign = 'left';
-        c.fillText(`Your SRT: ${studentSRT.toFixed(1)} dB SNR`, left + 8, ystu - 8);
+        c.textAlign = 'right';
+        c.fillText(`Your SRT: ${studentSRT.toFixed(1)} dB SNR`, right - 4, ystu - 8);
 
         c.restore();
       }
