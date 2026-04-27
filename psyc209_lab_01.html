@@ -580,11 +580,20 @@ body {
   <div class="lab-section" id="sec-noise" data-section="6">
     <h2>6. The Background Noise</h2>
 
-    <div class="placeholder-note">
-      📌 <strong>Placeholder:</strong> This section will contain a demo of how speech-weighted noise is generated — including an embedded video, waveform display, FFT spectrum, and optionally the ability to record your own voice and generate noise from it.
+    <p>The background noise used in the test isn't just random static — it's carefully shaped to have the same long-term frequency spectrum as the speech it masks. This is called <strong>speech-weighted noise</strong>.</p>
+
+    <p>Watch this short demo to see how the noise is built up by superimposing thousands of copies of the speech recordings at random positions:</p>
+
+    <div style="margin: 16px 0;">
+      <video controls playsinline preload="metadata" style="width:100%; max-width:872px; border-radius:var(--radius); border:1px solid var(--border);">
+        <source src="RuthNoise_1.mp4" type="video/mp4"/>
+        Your browser does not support the video tag.
+      </video>
     </div>
 
-    <p>The background noise used in the test isn't just random static — it's carefully shaped to have the same long-term frequency spectrum as the speech it masks. This is called <strong>speech-weighted noise</strong>.</p>
+    <div class="placeholder-note">
+      📌 <strong>Coming soon:</strong> An interactive demo where you can record your own voice and generate speech-weighted noise from it.
+    </div>
 
     <div style="margin-top:20px; text-align:right;">
       <button class="btn btn-primary" onclick="revealNext(6)">Continue →</button>
@@ -1929,7 +1938,7 @@ function initAdaptiveChart(trials, srt) {
       ]
     },
     options: {
-      responsive: true, maintainAspectRatio: true, aspectRatio: 1.8,
+      responsive: true, maintainAspectRatio: true, aspectRatio: window.innerWidth <= 600 ? 1.0 : 1.8,
       plugins: { legend: { position: 'top' } },
       scales: {
         x: { title: { display: true, text: 'Trial', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: trials.length + 1 },
