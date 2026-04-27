@@ -656,13 +656,16 @@ body {
         <li>A <strong>hearing-level cut-off</strong> — above this, the gold standard says the person has a hearing loss</li>
         <li>A <strong>test SRT cut-off</strong> — above (less negative than) this, the screening test says "refer"</li>
       </ol>
-      <p>This creates four quadrants. Try adjusting the sliders to see how the data points change classification:</p>
+      <p>This creates four quadrants. In practice, the hearing-level cut-off is fixed by clinical convention (usually 25 dB HL), but we're free to choose where to set the test's SRT cut-off. Try adjusting the SRT slider to see how the data points change classification:</p>
 
       <div class="demo-box interactive">
         <div class="slider-group">
           <label>Hearing-level cut-off:</label>
-          <input type="range" id="slider-hl" min="5" max="60" value="25" step="1" oninput="updateQuadrantChart()"/>
+          <input type="range" id="slider-hl" min="5" max="60" value="25" step="1" oninput="updateQuadrantChart()" disabled/>
           <span class="slider-val" id="val-hl">25 dB HL</span>
+          <label style="min-width:unset; font-size:0.82rem; cursor:pointer; user-select:none;">
+            <input type="checkbox" id="hl-lock" checked onchange="toggleHLLock()"/> Fix at 25 dB HL
+          </label>
         </div>
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
@@ -834,8 +837,14 @@ body {
       <h3>The ROC Curve</h3>
       <p>The same data can also be plotted as a <strong>Receiver Operating Characteristic (ROC)</strong> curve. This plots sensitivity (y-axis) against 1 − specificity (x-axis) for every possible cut-off. A perfect test would have a curve that goes straight up to the top-left corner.</p>
       <p>The <strong>area under the curve (AUC)</strong> summarises the test's overall discriminating ability. An AUC of 1.0 is perfect; 0.5 is no better than chance.</p>
+      <p>Try dragging the cut-off slider — the marker moves along the ROC curve. When you let go, it springs back to the Youden-optimal point:</p>
 
-      <div class="demo-box">
+      <div class="demo-box interactive">
+        <div class="slider-group">
+          <label>Test SRT cut-off:</label>
+          <input type="range" id="slider-roc" min="-22" max="0" step="0.1" oninput="updateROCSlider()" onmouseup="springROCBack()" ontouchend="springROCBack()"/>
+          <span class="slider-val" id="val-roc">—</span>
+        </div>
         <div class="chart-wrap"><canvas id="chart-roc"></canvas></div>
         <div class="stats-row">
           <div class="stat-card blue"><span class="stat-label">AUC</span><div class="stat-value" id="stat-auc">—</div></div>
@@ -893,6 +902,19 @@ body {
         <div>Drop your .csv file here or <strong>click to browse</strong></div>
         <input type="file" id="csv-input" accept=".csv" onchange="handleCSV(this.files[0])"/>
       </div>
+
+      <p style="margin-top:12px; font-size:0.9rem;">Or paste your CSV data directly:</p>
+      <textarea id="csv-paste" rows="6" placeholder="Paste the contents of your .csv file here..." style="width:100%; font-family:var(--font-mono); font-size:0.8rem; padding:10px; border:1px solid var(--border); border-radius:6px; resize:vertical;"></textarea>
+      <div style="margin-top:6px;">
+        <button class="btn btn-secondary" onclick="handlePastedCSV()">Load pasted data</button>
+      </div>
+
+      <details style="margin-top:16px; font-size:0.9rem; color:var(--text-muted);">
+        <summary style="cursor:pointer; font-weight:600;">Can't complete the test? Use sample data instead</summary>
+        <p style="margin-top:8px;">If you're unable to take the test right now, you can explore the analysis using sample data from a previous participant:</p>
+        <button class="btn btn-secondary" onclick="loadDummyData()">Load sample data</button>
+      </details>
+
       <div id="csv-error" style="color:var(--red); margin:8px 0; display:none;"></div>
 
       <!-- Results appear here after upload -->
@@ -1559,7 +1581,57 @@ function initROCChart() {
   document.getElementById('stat-optimal-co').textContent = bestCo.toFixed(1) + ' dB';
   document.getElementById('stat-opt-sens').textContent = (bestSens * 100).toFixed(0) + '%';
   document.getElementById('stat-opt-spec').textContent = (bestSpec * 100).toFixed(0) + '%';
+
+  // Store for slider interaction
+  window._rocBestCo = bestCo;
+  window._rocLookup = rocPoints; // [{x, y, co}, ...]
+
+  // Set slider to optimal and add the current-position marker dataset
+  const sliderEl = document.getElementById('slider-roc');
+  sliderEl.value = bestCo;
+  document.getElementById('val-roc').textContent = bestCo.toFixed(1) + ' dB SNR';
+
+  // Dataset index 3 = current marker (after ROC line, Youden diamond, Chance line)
+  chartROC.data.datasets.push({
+    label: 'Current cut-off',
+    data: [{ x: 1 - bestSpec, y: bestSens }],
+    backgroundColor: '#c0392b', borderColor: '#fff',
+    pointRadius: 10, pointStyle: 'circle', borderWidth: 2
+  });
+  chartROC.update('none');
 }
+
+/* ROC slider interaction */
+window.updateROCSlider = function() {
+  const val = parseFloat(document.getElementById('slider-roc').value);
+  document.getElementById('val-roc').textContent = val.toFixed(1) + ' dB SNR';
+  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
+  // Update the current marker (dataset index 3)
+  if (chartROC && chartROC.data.datasets[3]) {
+    chartROC.data.datasets[3].data = [{ x: 1 - m.spec, y: m.sens }];
+    chartROC.update('none');
+  }
+};
+
+window.springROCBack = function() {
+  const slider = document.getElementById('slider-roc');
+  const target = window._rocBestCo || -15.9;
+  const start = parseFloat(slider.value);
+  const duration = 400;
+  const startTime = performance.now();
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    // Eased spring: overshoot then settle
+    const ease = 1 - Math.pow(1 - t, 3) * Math.cos(t * Math.PI * 1.5);
+    const current = start + (target - start) * Math.min(ease, 1);
+    slider.value = current;
+    updateROCSlider();
+    if (t < 1) requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+};
 
 /* ===================================================================
    SECTION 9 SUB-SECTION REVEALS
@@ -1569,10 +1641,30 @@ window.showSec9b = function() {
   initQuadrantChart();
   document.getElementById('sec9b').scrollIntoView({ behavior: 'smooth' });
 };
+/* Toggle hearing-level cut-off slider lock */
+window.toggleHLLock = function() {
+  const locked = document.getElementById('hl-lock').checked;
+  const slider = document.getElementById('slider-hl');
+  slider.disabled = locked;
+  if (locked) {
+    slider.value = 25;
+    updateQuadrantChart();
+  }
+};
+
 window.showSec9c = function() {
   document.getElementById('sec9c').style.display = 'block';
   // Reveal the sens/spec/accuracy stats inline in 9b
-  document.getElementById('quad-sens-spec-stats').style.display = 'flex';
+  const statsEl = document.getElementById('quad-sens-spec-stats');
+  statsEl.style.display = 'flex';
+  // Add a nudge to go back and play
+  if (!document.getElementById('play-nudge')) {
+    const nudge = document.createElement('p');
+    nudge.id = 'play-nudge';
+    nudge.style.cssText = 'font-size:0.9rem; color:var(--blue); font-weight:500; margin-top:8px;';
+    nudge.textContent = '↑ Now scroll back up and try different SRT cut-offs — watch how sensitivity, specificity, and accuracy change!';
+    statsEl.after(nudge);
+  }
   // Trigger initial calculation
   updateQuadrantChart();
   document.getElementById('sec9c').scrollIntoView({ behavior: 'smooth' });
@@ -1672,6 +1764,70 @@ window.handleCSV = function(file) {
     }
   };
   reader.readAsText(file);
+};
+
+window.handlePastedCSV = function() {
+  const text = document.getElementById('csv-paste').value.trim();
+  const errEl = document.getElementById('csv-error');
+  errEl.style.display = 'none';
+  if (!text) {
+    errEl.textContent = 'Please paste your CSV data first.';
+    errEl.style.display = 'block';
+    return;
+  }
+  try {
+    parseAndDisplay(text, 'pasted_data.csv');
+  } catch (ex) {
+    errEl.textContent = 'Error parsing pasted data: ' + ex.message;
+    errEl.style.display = 'block';
+  }
+};
+
+/* Dummy / sample datasets — will be expanded when more are provided */
+const SAMPLE_DATASETS = [
+  {
+    name: 'Sample participant (NZ English)',
+    csv: `"trial_number","decibels_signal","correct_answer","participant_answer","correct"
+0,2,"849","849",true
+1,-2,"682","682",true
+2,-6,"361","361",true
+3,-10,"258","258",true
+4,-12,"546","546",true
+5,-14,"969","969",true
+6,-16,"524","124",false
+7,-14,"319","319",true
+8,-16,"932","932",true
+9,-18,"953","953",true
+10,-20,"312","312",true
+11,-22,"868","461",false
+12,-20,"196","156",false
+13,-18,"423","423",true
+14,-20,"245","245",true
+15,-22,"869","369",false
+16,-20,"254","354",false
+17,-18,"195","191",false
+18,-16,"184","184",true
+19,-18,"691","691",true
+20,-20,"438","438",true
+21,-22,"241","461",false
+22,-20,"435","435",true
+23,-22,"313","313",true
+24,-24,"681","631",false
+25,-22,"","null",false`
+  }
+];
+
+window.loadDummyData = function() {
+  const errEl = document.getElementById('csv-error');
+  errEl.style.display = 'none';
+  // Pick a random sample dataset
+  const sample = SAMPLE_DATASETS[Math.floor(Math.random() * SAMPLE_DATASETS.length)];
+  try {
+    parseAndDisplay(sample.csv, sample.name);
+  } catch (ex) {
+    errEl.textContent = 'Error loading sample data: ' + ex.message;
+    errEl.style.display = 'block';
+  }
 };
 
 function parseAndDisplay(csvText, fileName) {
