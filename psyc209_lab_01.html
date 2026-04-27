@@ -852,11 +852,11 @@ body {
       <div id="results-area" style="display:none;">
 
         <h3>Your Adaptive Track</h3>
-        <p>The chart below shows how the signal level (in dB SNR) changed across your 25 trials. Green dots are trials you got correct; red dots are incorrect:</p>
+        <p>The chart below shows how the signal level (in dB SNR) changed across your 26 trials. Green dots are trials you got correct; red dots are incorrect. The thick blue line shows your calculated SRT — the average signal level from trials 8–26:</p>
         <div class="chart-wrap"><canvas id="chart-adaptive"></canvas></div>
 
         <h3>Trial-by-Trial Data</h3>
-        <p>The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. Your SRT is the average of the signal levels from trials 8 through 26.</p>
+        <p>The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. Your SRT is the average of the signal levels from trials 8 through 26. The final trial (26) is a "phantom" trial — no digits are presented, but its signal level is determined by your previous response and is included in the SRT calculation.</p>
         <div style="overflow-x:auto;">
           <table class="trial-table" id="trial-table">
             <thead>
@@ -1662,13 +1662,16 @@ function parseAndDisplay(csvText, fileName) {
   for (const t of trials) {
     const tr = document.createElement('tr');
     if (t.trialNum < 7) tr.classList.add('excluded');
-    tr.classList.add(t.correct ? 'correct-row' : 'incorrect-row');
+    const isNullTrial = (t.correctAns === '—' || t.partAns === '—');
+    if (!isNullTrial) {
+      tr.classList.add(t.correct ? 'correct-row' : 'incorrect-row');
+    }
     tr.innerHTML = `
       <td>${t.trialNum + 1}</td>
       <td>${t.dbSignal}</td>
-      <td>${t.correctAns}</td>
-      <td>${t.partAns}</td>
-      <td>${t.correct ? '✓' : '✗'}</td>
+      <td>${isNullTrial ? '—' : t.correctAns}</td>
+      <td>${isNullTrial ? '—' : t.partAns}</td>
+      <td>${isNullTrial ? '—' : (t.correct ? '✓' : '✗')}</td>
     `;
     tbody.appendChild(tr);
   }
@@ -1686,7 +1689,7 @@ function parseAndDisplay(csvText, fileName) {
     : `🔴 <strong>REFER</strong> — Your SRT of ${srt.toFixed(1)} dB SNR is above the cut-off of ${srtCutoff.toFixed(1)} dB SNR. This suggests further hearing assessment may be warranted.`;
 
   // Adaptive track chart
-  initAdaptiveChart(trials);
+  initAdaptiveChart(trials, srt);
 
   // Final scatter chart
   initFinalScatter(popData, srt, srtCutoff, passed);
@@ -1696,11 +1699,17 @@ function parseAndDisplay(csvText, fileName) {
   setTimeout(() => document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
-function initAdaptiveChart(trials) {
+function initAdaptiveChart(trials, srt) {
   if (chartAdaptive) chartAdaptive.destroy();
-  const correctPts = trials.filter(t => t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
-  const incorrectPts = trials.filter(t => !t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
+
+  // Null trial: keep in track line but exclude from correct/incorrect dots
+  const nonNullTrials = trials.filter(t => t.correctAns !== '—' && t.partAns !== '—');
+  const correctPts = nonNullTrials.filter(t => t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
+  const incorrectPts = nonNullTrials.filter(t => !t.correct).map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
   const allPts = trials.map(t => ({ x: t.trialNum + 1, y: t.dbSignal }));
+
+  // SRT average line: spans from trial 8 to trial 26 (0-indexed 7 to 25 → display 8 to 26)
+  const srtLine = [{ x: 8, y: srt }, { x: 26, y: srt }];
 
   const ctx = document.getElementById('chart-adaptive').getContext('2d');
   chartAdaptive = new Chart(ctx, {
@@ -1709,7 +1718,8 @@ function initAdaptiveChart(trials) {
       datasets: [
         { label: 'Adaptive track', data: allPts, showLine: true, borderColor: '#999', pointRadius: 0, borderWidth: 1.5, tension: 0 },
         { label: 'Correct', data: correctPts, backgroundColor: '#2d8a4e', pointRadius: 6, pointStyle: 'circle' },
-        { label: 'Incorrect', data: incorrectPts, backgroundColor: '#c0392b', pointRadius: 6, pointStyle: 'circle' }
+        { label: 'Incorrect', data: incorrectPts, backgroundColor: '#c0392b', pointRadius: 6, pointStyle: 'circle' },
+        { label: `SRT = ${srt.toFixed(1)} dB SNR`, data: srtLine, showLine: true, borderColor: '#2471a3', borderWidth: 4, pointRadius: 0, borderDash: [] }
       ]
     },
     options: {
