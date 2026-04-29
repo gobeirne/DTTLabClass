@@ -719,7 +719,7 @@ body {
         </div>
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
-          <input type="range" id="slider-srt" min="-22" max="0" value="-15.9" step="0.1" oninput="updateQuadrantChart()"/>
+          <input type="range" id="slider-srt" min="-22" max="8" value="-15.9" step="0.1" oninput="updateQuadrantChart()"/>
           <span class="slider-val" id="val-srt">-15.9 dB SNR</span>
         </div>
 
@@ -801,7 +801,7 @@ body {
       <div class="demo-box interactive">
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
-          <input type="range" id="slider-sens-explore" min="-22" max="0" value="-22" step="0.2" oninput="updateSensExplore()"/>
+          <input type="range" id="slider-sens-explore" min="-22" max="8" value="-22" step="0.2" oninput="updateSensExplore()"/>
           <span class="slider-val" id="val-sens-explore">-22 dB SNR</span>
         </div>
         <div class="chart-wrap"><canvas id="chart-sens-explore"></canvas></div>
@@ -823,7 +823,7 @@ body {
       <div class="demo-box interactive">
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
-          <input type="range" id="slider-spec-explore" min="-22" max="0" value="-22" step="0.2" oninput="updateSpecExplore()"/>
+          <input type="range" id="slider-spec-explore" min="-22" max="8" value="-22" step="0.2" oninput="updateSpecExplore()"/>
           <span class="slider-val" id="val-spec-explore">-22 dB SNR</span>
         </div>
         <div class="chart-wrap"><canvas id="chart-spec-explore"></canvas></div>
@@ -845,7 +845,7 @@ body {
       <div class="demo-box interactive">
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
-          <input type="range" id="slider-combined" min="-22" max="0" value="-22" step="0.1" oninput="updateCombinedChart()"/>
+          <input type="range" id="slider-combined" min="-22" max="8" value="-22" step="0.1" oninput="updateCombinedChart()"/>
           <span class="slider-val" id="val-combined">-22.0 dB SNR</span>
         </div>
         <div class="chart-wrap"><canvas id="chart-combined"></canvas></div>
@@ -878,7 +878,7 @@ body {
           <div id="maori-cutoff-note" style="display:none;">
             <div class="def-box" style="margin-top:16px; border-left-color: var(--blue);">
               <span class="def-term" style="color: var(--blue);">A note on the te reo Māori cut-off</span><br/>
-              The Youden-optimal cut-off maximises the combined sensitivity and specificity equally. However, for the te reo Māori version of the test, we chose a cut-off of <strong>−9.5 dB SNR</strong> rather than the Youden optimum. This was a deliberate decision to prioritise higher sensitivity — ensuring that more people who do have a hearing loss are correctly identified — at the expense of somewhat lower specificity. In a screening context, it is generally better to over-refer (false positives) than to miss someone who needs help (false negatives).
+              The Youden-optimal cut-off maximises the combined sensitivity and specificity equally. However, for the te reo Māori version of the test, we chose a cut-off of <strong>−9.5 dB SNR</strong> rather than the Youden optimum. This was because a range of cut-offs gave near identical Youden values (around 0.58 or 0.59), and we decided to prioritise the cut-off that gave higher sensitivity (ensuring that more people who do have a hearing loss are correctly identified) at the expense of somewhat lower specificity, while still having a Youden's J of 0.58 instead of 0.59.
             </div>
           </div>
         </div>
@@ -907,7 +907,7 @@ body {
         </div>
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
-          <input type="range" id="slider-roc" min="-22" max="0" step="0.1" oninput="updateROCSlider()" onmouseup="springROCBack()" ontouchend="springROCBack()"/>
+          <input type="range" id="slider-roc" min="-22" max="8" step="0.1" oninput="updateROCSlider()" onmouseup="springROCBack()" ontouchend="springROCBack()"/>
           <span class="slider-val" id="val-roc">—</span>
         </div>
         <div class="chart-wrap"><canvas id="chart-roc"></canvas></div>
@@ -1261,6 +1261,8 @@ function initScatter1() {
    SECTION 9b: Quadrant chart with sliders
    =================================================================== */
 function initQuadrantChart() {
+  // Set SRT slider to the current language's cut-off
+  document.getElementById('slider-srt').value = getSRTCutoff();
   const ctx = document.getElementById('chart-quadrant').getContext('2d');
   chartQuadrant = new Chart(ctx, {
     type: 'scatter',
@@ -1408,7 +1410,7 @@ function initSensExploreChart() {
       responsive: true, maintainAspectRatio: true, aspectRatio: 1.6,
       plugins: { legend: { display: false } },
       scales: {
-        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 0 },
+        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 8 },
         y: { title: { display: true, text: 'Sensitivity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.05 }
       }
     },
@@ -1470,7 +1472,7 @@ function initSpecExploreChart() {
       responsive: true, maintainAspectRatio: true, aspectRatio: 1.6,
       plugins: { legend: { display: false } },
       scales: {
-        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 0 },
+        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 8 },
         y: { title: { display: true, text: 'Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.05 }
       }
     },
@@ -1519,7 +1521,7 @@ function initCombinedChart() {
   // Pre-compute full curves
   const sensData = [], specData = [];
   bestYoudenJ = -1;
-  for (let co = -22; co <= 0; co += 0.2) {
+  for (let co = -22; co <= 8; co += 0.2) {
     const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, co);
     sensData.push({ x: co, y: m.sens });
     specData.push({ x: co, y: m.spec });
@@ -1540,7 +1542,7 @@ function initCombinedChart() {
       responsive: true, maintainAspectRatio: true, aspectRatio: 1.6,
       plugins: { legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 } } } },
       scales: {
-        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 0 },
+        x: { title: { display: true, text: 'SNR cutoff (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -22, max: 8 },
         y: { title: { display: true, text: 'Sensitivity / Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.05 }
       }
     },
@@ -1568,6 +1570,10 @@ window.updateCombinedChart = function() {
   const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, val);
   document.getElementById('stat-comb-sens').textContent = (m.sens * 100).toFixed(1) + '%';
   document.getElementById('stat-comb-spec').textContent = (m.spec * 100).toFixed(1) + '%';
+  // After Youden reveal, also update J display
+  if (combinedYoudenRevealed) {
+    document.getElementById('stat-comb-j').textContent = (m.sens + m.spec - 1).toFixed(3);
+  }
   chartCombined.update('none');
 };
 
@@ -1575,14 +1581,13 @@ window.lockInChoice = function() {
   const userCo = parseFloat(document.getElementById('slider-combined').value);
   const diff = Math.abs(userCo - bestYoudenCo);
 
-  // Disable slider
-  document.getElementById('slider-combined').disabled = true;
+  // Keep slider active so they can keep exploring after the reveal
   document.getElementById('btn-lockin').disabled = true;
   document.getElementById('lockin-area').style.display = 'none';
 
   // Add Youden curve to chart
   const youdenData = [];
-  for (let co = -22; co <= 0; co += 0.2) {
+  for (let co = -22; co <= 8; co += 0.2) {
     const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, co);
     youdenData.push({ x: co, y: m.sens + m.spec - 1 });
   }
