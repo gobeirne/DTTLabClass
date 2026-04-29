@@ -422,6 +422,10 @@ body {
   border: 1px solid var(--border);
 }
 
+/* ===== ROC STATS ===== */
+/* On desktop: hide mobile stat boxes (stats are drawn on the canvas) */
+.roc-mobile-stats { display: none; }
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 600px) {
   .lab-section { padding: 20px 18px; }
@@ -464,8 +468,26 @@ body {
     font-size: 0.65rem;
   }
 
+  /* ROC mobile stats: show as 3-col grids */
+  .roc-mobile-stats { display: block; }
+  .roc-stats-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+  }
+  .roc-stats-grid .stat-card {
+    min-width: unset;
+    padding: 8px 6px;
+  }
+  .roc-stats-grid .stat-card .stat-value {
+    font-size: 0.9rem;
+  }
+  .roc-stats-grid .stat-card .stat-label {
+    font-size: 0.6rem;
+  }
+
   /* Other stats rows stay stacked */
-  .stats-row:not(.quad-grid):not(.sens-spec-grid) {
+  .stats-row:not(.quad-grid):not(.sens-spec-grid):not(.roc-stats-grid) {
     flex-direction: column;
   }
 
@@ -858,16 +880,32 @@ body {
 
       <div class="demo-box interactive">
         <div class="slider-group">
+          <label>Hearing-level cut-off:</label>
+          <input type="range" id="slider-roc-hl" min="5" max="60" value="25" step="1" oninput="rebuildROC()" disabled/>
+          <span class="slider-val" id="val-roc-hl">25 dB HL</span>
+          <label style="min-width:unset; font-size:0.82rem; cursor:pointer; user-select:none;">
+            <input type="checkbox" id="roc-hl-lock" checked onchange="toggleROCHLLock()"/> Fix at 25 dB HL
+          </label>
+        </div>
+        <div class="slider-group">
           <label>Test SRT cut-off:</label>
           <input type="range" id="slider-roc" min="-22" max="0" step="0.1" oninput="updateROCSlider()" onmouseup="springROCBack()" ontouchend="springROCBack()"/>
           <span class="slider-val" id="val-roc">—</span>
         </div>
         <div class="chart-wrap"><canvas id="chart-roc"></canvas></div>
-        <div class="stats-row">
-          <div class="stat-card blue"><span class="stat-label">AUC</span><div class="stat-value" id="stat-auc">—</div></div>
-          <div class="stat-card green"><span class="stat-label">Optimal cut-off</span><div class="stat-value" id="stat-optimal-co">—</div></div>
-          <div class="stat-card green"><span class="stat-label">Sensitivity @ optimal</span><div class="stat-value" id="stat-opt-sens">—</div></div>
-          <div class="stat-card blue"><span class="stat-label">Specificity @ optimal</span><div class="stat-value" id="stat-opt-spec">—</div></div>
+
+        <!-- Mobile-only stat boxes (hidden on desktop via CSS) -->
+        <div class="roc-mobile-stats" id="roc-mobile-stats">
+          <div class="stats-row roc-stats-grid">
+            <div class="stat-card green"><span class="stat-label">Optimal cut-off</span><div class="stat-value" id="stat-optimal-co-m">—</div></div>
+            <div class="stat-card green"><span class="stat-label">Sens @ optimal</span><div class="stat-value" id="stat-opt-sens-m">—</div></div>
+            <div class="stat-card green"><span class="stat-label">Spec @ optimal</span><div class="stat-value" id="stat-opt-spec-m">—</div></div>
+          </div>
+          <div class="stats-row roc-stats-grid">
+            <div class="stat-card blue"><span class="stat-label">Current cut-off</span><div class="stat-value" id="stat-cur-co-m">—</div></div>
+            <div class="stat-card blue"><span class="stat-label">Sens @ current</span><div class="stat-value" id="stat-cur-sens-m">—</div></div>
+            <div class="stat-card blue"><span class="stat-label">Spec @ current</span><div class="stat-value" id="stat-cur-spec-m">—</div></div>
+          </div>
         </div>
       </div>
 
@@ -1528,38 +1566,24 @@ window.lockInChoice = function() {
 /* ===================================================================
    SECTION 9h: ROC curve
    =================================================================== */
+/* ===================================================================
+   SECTION 9h: ROC curve with HL slider and on-canvas stats
+   =================================================================== */
+let rocHLCut = DEFAULT_HL_CUTOFF;
+let rocBestCo = 0, rocBestSens = 0, rocBestSpec = 0, rocAUC = 0;
+let rocCurCo = 0, rocCurSens = 0, rocCurSpec = 0;
+
 function initROCChart() {
-  // Compute ROC points by sweeping cut-off from most negative to least negative.
-  // This traces the curve from bottom-left (everything passes) to top-right (everything refers).
-  const rawPoints = [];
-  let bestJ = -1, bestCo = 0, bestSens = 0, bestSpec = 0;
-  for (let co = -24; co <= 2; co += 0.05) {
-    const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
-    const fpr = 1 - m.spec;
-    rawPoints.push({ x: fpr, y: m.sens, co });
-    const j = m.sens + m.spec - 1;
-    if (j > bestJ) { bestJ = j; bestCo = co; bestSens = m.sens; bestSpec = m.spec; }
-  }
+  rocHLCut = parseFloat(document.getElementById('slider-roc-hl').value);
+  buildROCData(rocHLCut);
 
-  // Deduplicate: keep only points where (x, y) actually changes
-  const rocPoints = [rawPoints[0]];
-  for (let i = 1; i < rawPoints.length; i++) {
-    const prev = rocPoints[rocPoints.length - 1];
-    if (rawPoints[i].x !== prev.x || rawPoints[i].y !== prev.y) {
-      rocPoints.push(rawPoints[i]);
-    }
-  }
-
-  // Sort by x (FPR) then by y for proper staircase
-  rocPoints.sort((a, b) => a.x - b.x || a.y - b.y);
-
-  // AUC by trapezoidal rule
-  let auc = 0;
-  for (let i = 1; i < rocPoints.length; i++) {
-    const dx = rocPoints[i].x - rocPoints[i-1].x;
-    const avgY = (rocPoints[i].y + rocPoints[i-1].y) / 2;
-    auc += dx * avgY;
-  }
+  const sliderEl = document.getElementById('slider-roc');
+  sliderEl.value = rocBestCo;
+  rocCurCo = rocBestCo;
+  rocCurSens = rocBestSens;
+  rocCurSpec = rocBestSpec;
+  document.getElementById('val-roc').textContent = rocBestCo.toFixed(1) + ' dB SNR';
+  document.getElementById('val-roc-hl').textContent = rocHLCut + ' dB HL';
 
   const ctx = document.getElementById('chart-roc').getContext('2d');
   chartROC = new Chart(ctx, {
@@ -1567,14 +1591,15 @@ function initROCChart() {
     data: {
       datasets: [
         {
-          label: `Test SRT vs 4FA > 25 dB HL (AUC=${auc.toFixed(2)})`,
-          data: rocPoints.map(p => ({x: p.x, y: p.y})), showLine: true,
+          label: 'ROC curve',
+          data: window._rocCurve,
+          showLine: true,
           borderColor: '#1a5276', backgroundColor: 'rgba(26, 82, 118, 0.08)',
           fill: true, pointRadius: 0, borderWidth: 2.5, tension: 0
         },
         {
-          label: `Youden optimum: ${bestCo.toFixed(1)} dB SNR`,
-          data: [{ x: 1 - bestSpec, y: bestSens }],
+          label: 'Youden optimum',
+          data: [{ x: 1 - rocBestSpec, y: rocBestSens }],
           backgroundColor: '#e67e22', borderColor: '#c0392b',
           pointRadius: 8, pointStyle: 'rectRot'
         },
@@ -1583,53 +1608,157 @@ function initROCChart() {
           data: [{ x: 0, y: 0 }, { x: 1, y: 1 }],
           showLine: true, borderColor: '#ccc', borderDash: [4, 3],
           pointRadius: 0, borderWidth: 1
+        },
+        {
+          label: 'Current cut-off',
+          data: [{ x: 1 - rocBestSpec, y: rocBestSens }],
+          backgroundColor: '#c0392b', borderColor: '#fff',
+          pointRadius: 10, pointStyle: 'circle', borderWidth: 2
         }
       ]
     },
     options: {
       responsive: true, maintainAspectRatio: true, aspectRatio: 1,
-      plugins: { legend: { position: 'bottom', labels: { font: { family: 'DM Sans', size: 11 } } } },
+      plugins: {
+        legend: { display: false }
+      },
       scales: {
         x: { title: { display: true, text: '1 − Specificity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1 },
         y: { title: { display: true, text: 'Sensitivity', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: 0, max: 1.02 }
       }
-    }
+    },
+    plugins: [{
+      id: 'rocOverlay',
+      afterDraw(chart) {
+        const { ctx: c, chartArea: { left, right, top, bottom } } = chart;
+        const isMobile = window.innerWidth <= 600;
+        c.save();
+
+        if (isMobile) {
+          // Mobile: just show AUC on the chart
+          c.font = 'bold 14px DM Sans';
+          c.fillStyle = '#1a5276';
+          c.textAlign = 'center';
+          c.fillText(`AUC = ${rocAUC.toFixed(2)}`, (left + right) / 2, bottom - 20);
+        } else {
+          // Desktop: full stats overlay in bottom-right area
+          const ox = left + (right - left) * 0.52;
+          const oy = top + (bottom - top) * 0.52;
+          const lh = 18;
+
+          c.font = 'bold 14px DM Sans';
+          c.fillStyle = '#1a5276';
+          c.textAlign = 'left';
+          c.fillText(`AUC = ${rocAUC.toFixed(2)}`, ox, oy);
+
+          c.font = '12px DM Sans';
+          c.fillStyle = '#2d8a4e';
+          c.fillText(`◆ Optimal: ${rocBestCo.toFixed(1)} dB SNR`, ox, oy + lh * 1.5);
+          c.fillText(`   Sens ${(rocBestSens * 100).toFixed(0)}%  Spec ${(rocBestSpec * 100).toFixed(0)}%`, ox, oy + lh * 2.5);
+
+          c.fillStyle = '#c0392b';
+          c.fillText(`● Current: ${rocCurCo.toFixed(1)} dB SNR`, ox, oy + lh * 4);
+          c.fillText(`   Sens ${(rocCurSens * 100).toFixed(0)}%  Spec ${(rocCurSpec * 100).toFixed(0)}%`, ox, oy + lh * 5);
+        }
+        c.restore();
+      }
+    }]
   });
 
-  document.getElementById('stat-auc').textContent = auc.toFixed(2);
-  document.getElementById('stat-optimal-co').textContent = bestCo.toFixed(1) + ' dB';
-  document.getElementById('stat-opt-sens').textContent = (bestSens * 100).toFixed(0) + '%';
-  document.getElementById('stat-opt-spec').textContent = (bestSpec * 100).toFixed(0) + '%';
-
-  // Store for slider interaction
-  window._rocBestCo = bestCo;
-  window._rocLookup = rocPoints; // [{x, y, co}, ...]
-
-  // Set slider to optimal and add the current-position marker dataset
-  const sliderEl = document.getElementById('slider-roc');
-  sliderEl.value = bestCo;
-  document.getElementById('val-roc').textContent = bestCo.toFixed(1) + ' dB SNR';
-
-  // Dataset index 3 = current marker (after ROC line, Youden diamond, Chance line)
-  chartROC.data.datasets.push({
-    label: 'Current cut-off',
-    data: [{ x: 1 - bestSpec, y: bestSens }],
-    backgroundColor: '#c0392b', borderColor: '#fff',
-    pointRadius: 10, pointStyle: 'circle', borderWidth: 2
-  });
-  chartROC.update('none');
+  updateROCMobileStats();
 }
+
+function buildROCData(hlCut) {
+  const rawPoints = [];
+  let bestJ = -1;
+  rocBestCo = 0; rocBestSens = 0; rocBestSpec = 0;
+  for (let co = -24; co <= 2; co += 0.05) {
+    const m = computeMetrics(POP_DATA_NZENG, hlCut, co);
+    const fpr = 1 - m.spec;
+    rawPoints.push({ x: fpr, y: m.sens, co });
+    const j = m.sens + m.spec - 1;
+    if (j > bestJ) { bestJ = j; rocBestCo = co; rocBestSens = m.sens; rocBestSpec = m.spec; }
+  }
+  // Deduplicate
+  const rocPoints = [rawPoints[0]];
+  for (let i = 1; i < rawPoints.length; i++) {
+    const prev = rocPoints[rocPoints.length - 1];
+    if (rawPoints[i].x !== prev.x || rawPoints[i].y !== prev.y) {
+      rocPoints.push(rawPoints[i]);
+    }
+  }
+  rocPoints.sort((a, b) => a.x - b.x || a.y - b.y);
+
+  // AUC
+  rocAUC = 0;
+  for (let i = 1; i < rocPoints.length; i++) {
+    const dx = rocPoints[i].x - rocPoints[i - 1].x;
+    const avgY = (rocPoints[i].y + rocPoints[i - 1].y) / 2;
+    rocAUC += dx * avgY;
+  }
+  window._rocCurve = rocPoints.map(p => ({ x: p.x, y: p.y }));
+  window._rocBestCo = rocBestCo;
+}
+
+function updateROCMobileStats() {
+  // Update mobile stat boxes
+  const el = (id) => document.getElementById(id);
+  if (el('stat-optimal-co-m')) {
+    el('stat-optimal-co-m').textContent = rocBestCo.toFixed(1) + ' dB';
+    el('stat-opt-sens-m').textContent = (rocBestSens * 100).toFixed(0) + '%';
+    el('stat-opt-spec-m').textContent = (rocBestSpec * 100).toFixed(0) + '%';
+    el('stat-cur-co-m').textContent = rocCurCo.toFixed(1) + ' dB';
+    el('stat-cur-sens-m').textContent = (rocCurSens * 100).toFixed(0) + '%';
+    el('stat-cur-spec-m').textContent = (rocCurSpec * 100).toFixed(0) + '%';
+  }
+}
+
+window.toggleROCHLLock = function() {
+  const locked = document.getElementById('roc-hl-lock').checked;
+  const slider = document.getElementById('slider-roc-hl');
+  slider.disabled = locked;
+  if (locked) {
+    slider.value = 25;
+    rebuildROC();
+  }
+};
+
+window.rebuildROC = function() {
+  const hlCut = parseFloat(document.getElementById('slider-roc-hl').value);
+  document.getElementById('val-roc-hl').textContent = hlCut + ' dB HL';
+  rocHLCut = hlCut;
+  buildROCData(hlCut);
+
+  // Update chart datasets
+  chartROC.data.datasets[0].data = window._rocCurve;
+  chartROC.data.datasets[1].data = [{ x: 1 - rocBestSpec, y: rocBestSens }];
+
+  // Reset SRT slider to new optimum
+  const sliderEl = document.getElementById('slider-roc');
+  sliderEl.value = rocBestCo;
+  rocCurCo = rocBestCo;
+  rocCurSens = rocBestSens;
+  rocCurSpec = rocBestSpec;
+  document.getElementById('val-roc').textContent = rocBestCo.toFixed(1) + ' dB SNR';
+  chartROC.data.datasets[3].data = [{ x: 1 - rocBestSpec, y: rocBestSens }];
+
+  chartROC.update();
+  updateROCMobileStats();
+};
 
 /* ROC slider interaction */
 window.updateROCSlider = function() {
   const val = parseFloat(document.getElementById('slider-roc').value);
   document.getElementById('val-roc').textContent = val.toFixed(1) + ' dB SNR';
-  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
-  // Update the current marker (dataset index 3)
+  const m = computeMetrics(POP_DATA_NZENG, rocHLCut, val);
+  rocCurCo = val;
+  rocCurSens = m.sens;
+  rocCurSpec = m.spec;
   if (chartROC && chartROC.data.datasets[3]) {
     chartROC.data.datasets[3].data = [{ x: 1 - m.spec, y: m.sens }];
     chartROC.update('none');
   }
+  updateROCMobileStats();
 };
 
 window.springROCBack = function() {
@@ -1642,7 +1771,6 @@ window.springROCBack = function() {
   function animate(now) {
     const elapsed = now - startTime;
     const t = Math.min(elapsed / duration, 1);
-    // Eased spring: overshoot then settle
     const ease = 1 - Math.pow(1 - t, 3) * Math.cos(t * Math.PI * 1.5);
     const current = start + (target - start) * Math.min(ease, 1);
     slider.value = current;
