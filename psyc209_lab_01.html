@@ -686,7 +686,7 @@ body {
         </div>
         <div class="slider-group">
           <label>Test SRT cut-off:</label>
-          <input type="range" id="slider-srt" min="-22" max="-4" value="-15.9" step="0.1" oninput="updateQuadrantChart()"/>
+          <input type="range" id="slider-srt" min="-22" max="0" value="-15.9" step="0.1" oninput="updateQuadrantChart()"/>
           <span class="slider-val" id="val-srt">-15.9 dB SNR</span>
         </div>
 
@@ -737,7 +737,7 @@ body {
         The proportion of all results that are correct (either true positives or true negatives).
       </div>
 
-      <p>These values update live as you adjust the sliders on the chart above. Scroll back up and have another look.</p>
+      <p>These values update live as you adjust the sliders on the chart above.</p>
 
       <div style="margin-top:16px; text-align:right;">
         <button class="btn btn-primary" onclick="showSec9d()">Continue →</button>
@@ -894,7 +894,7 @@ body {
 
       <p>This will trigger the test to email your results to you, including a <code>.csv</code> file with all the trial-by-trial data.</p>
 
-      <p>You can do the test in <strong>English</strong> or <strong>te reo Māori</strong> — the choice is yours. Use headphones if possible for the best results.</p>
+      <p>You can do the test in <strong>English</strong> or <strong>te reo Māori</strong> — the choice is yours. This test must be performed with headphones due to the antiphasic nature of the stimuli.</p>
 
       <div style="margin: 20px 0;">
         <a href="https://nzhst.canterbury.ac.nz/" target="_blank" class="btn btn-link" style="font-size:1.1rem; padding: 14px 32px;">
@@ -937,12 +937,12 @@ body {
       <!-- Results appear here after upload -->
       <div id="results-area" style="display:none;">
 
-        <h3>Your Adaptive Track</h3>
-        <p>The chart below shows how the signal level (in dB SNR) changed across your 26 trials. Green dots are trials you got correct; red dots are incorrect. The thick blue line shows your calculated SRT — the average signal level from trials 8–26:</p>
+        <h3 id="adaptive-heading">Your Adaptive Track</h3>
+        <p id="adaptive-desc">The chart below shows how the signal level (in dB SNR) changed across your 26 trials. Green dots are trials you got correct; red dots are incorrect. The thick blue line shows your calculated SRT — the average signal level from trials 8–26:</p>
         <div class="chart-wrap"><canvas id="chart-adaptive"></canvas></div>
 
         <h3>Trial-by-Trial Data</h3>
-        <p>The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. Your SRT is the average of the signal levels from trials 8 through 26. The final trial (26) is a "phantom" trial — no digits are presented, but its signal level is determined by your previous response and is included in the SRT calculation.</p>
+        <p id="trial-desc">The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. Your SRT is the average of the signal levels from trials 8 through 26. The final trial (26) is a "phantom" trial — no digits are presented, but its signal level is determined by your previous response and is included in the SRT calculation.</p>
         <div style="overflow-x:auto;">
           <table class="trial-table" id="trial-table">
             <thead>
@@ -950,7 +950,7 @@ body {
                 <th>Trial</th>
                 <th>Signal (dB SNR)</th>
                 <th>Digits Presented</th>
-                <th>Your Response</th>
+                <th id="response-col-header">Your Response</th>
                 <th>Correct?</th>
               </tr>
             </thead>
@@ -958,16 +958,16 @@ body {
           </table>
         </div>
 
-        <h3>Your SRT</h3>
+        <h3 id="srt-heading">Your SRT</h3>
         <div class="stats-row">
-          <div class="stat-card blue"><span class="stat-label">Your SRT</span><div class="stat-value" id="stat-your-srt">—</div></div>
+          <div class="stat-card blue"><span class="stat-label" id="stat-srt-label">Your SRT</span><div class="stat-value" id="stat-your-srt">—</div></div>
           <div class="stat-card"><span class="stat-label">Test cut-off</span><div class="stat-value" id="stat-cutoff-display">-15.9</div></div>
         </div>
 
         <div class="result-banner" id="result-banner"></div>
 
-        <h3>Your Result in Context</h3>
-        <p>The scatter plot below shows where your SRT sits relative to the population data. Your score is shown as a prominent dashed line:</p>
+        <h3 id="context-heading">Your Result in Context</h3>
+        <p id="context-desc">The scatter plot below shows where your SRT sits relative to the population data. Your score is shown as a prominent dashed line:</p>
         <div class="chart-wrap"><canvas id="chart-final-scatter"></canvas></div>
 
       </div>
@@ -1033,7 +1033,7 @@ const DEFAULT_SRT_CUTOFF = -15.9;
 /* ===================================================================
    PROGRESSIVE REVEAL SYSTEM
    =================================================================== */
-function revealSection(n) {
+function revealSection(n, shouldScroll) {
   const secs = document.querySelectorAll('.lab-section');
   secs.forEach(s => {
     const sn = parseInt(s.dataset.section);
@@ -1043,18 +1043,20 @@ function revealSection(n) {
       requestAnimationFrame(() => requestAnimationFrame(() => s.classList.add('revealed')));
     }
   });
-  // scroll into view
-  const target = document.querySelector(`[data-section="${n}"]`);
-  if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  // scroll into view (but not on initial page load)
+  if (shouldScroll) {
+    const target = document.querySelector(`[data-section="${n}"]`);
+    if (target) setTimeout(() => target.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+  }
 }
 
 window.revealNext = function(currentSection) {
-  revealSection(currentSection + 1);
+  revealSection(currentSection + 1, true);
 };
 
-// Show section 1 on load
+// Show section 1 on load — no scroll
 window.addEventListener('DOMContentLoaded', () => {
-  revealSection(1);
+  revealSection(1, false);
 });
 
 /* ===================================================================
@@ -1775,7 +1777,7 @@ window.handleCSV = function(file) {
   const reader = new FileReader();
   reader.onload = function(e) {
     try {
-      parseAndDisplay(e.target.result, file.name);
+      parseAndDisplay(e.target.result, file.name, false);
     } catch (ex) {
       errEl.textContent = 'Error parsing CSV: ' + ex.message;
       errEl.style.display = 'block';
@@ -1794,7 +1796,7 @@ window.handlePastedCSV = function() {
     return;
   }
   try {
-    parseAndDisplay(text, 'pasted_data.csv');
+    parseAndDisplay(text, 'pasted_data.csv', false);
   } catch (ex) {
     errEl.textContent = 'Error parsing pasted data: ' + ex.message;
     errEl.style.display = 'block';
@@ -1841,23 +1843,25 @@ window.loadDummyData = function() {
   // Pick a random sample dataset
   const sample = SAMPLE_DATASETS[Math.floor(Math.random() * SAMPLE_DATASETS.length)];
   try {
-    parseAndDisplay(sample.csv, sample.name);
+    parseAndDisplay(sample.csv, sample.name, true);
   } catch (ex) {
     errEl.textContent = 'Error loading sample data: ' + ex.message;
     errEl.style.display = 'block';
   }
 };
 
-function parseAndDisplay(csvText, fileName) {
-  // Parse CSV
-  const lines = csvText.trim().replace(/\r/g, '').split('\n');
+function parseAndDisplay(csvText, fileName, isSample) {
+  // Sanitise: trim whitespace, normalise line endings, skip blank lines
+  const lines = csvText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim() !== '');
   const header = lines[0].replace(/"/g, '').split(',');
   const trials = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].replace(/"/g, '').split(',');
+    const cols = lines[i].trim().replace(/"/g, '').split(',');
     if (cols.length < 5) continue;
     const trialNum = parseInt(cols[0]);
+    if (isNaN(trialNum)) continue;
     const dbSignal = parseInt(cols[1]);
+    if (isNaN(dbSignal)) continue;
     const correctAns = cols[2];
     const partAns = cols[3];
     const correct = cols[4].trim().toLowerCase() === 'true';
@@ -1868,6 +1872,14 @@ function parseAndDisplay(csvText, fileName) {
 
   if (trials.length < 10) throw new Error('Not enough valid trials found in the file.');
 
+  // Pronouns: "your" / "you" for real data, "their" / "they" for sample
+  const poss = isSample ? 'their' : 'your';    // your / their
+  const Poss = isSample ? 'Their' : 'Your';    // Your / Their
+  const subj = isSample ? 'they' : 'you';      // you / they
+  const Subj = isSample ? 'They' : 'You';      // You / They
+  const obj  = isSample ? 'them' : 'you';       // you / them
+  const verbGot = isSample ? 'they got' : 'you got';
+
   // Detect language from filename (placeholder — Māori files will have different naming)
   const isMaori = /maori|reo|mri/i.test(fileName);
   const popData = (isMaori && POP_DATA_MAORI) ? POP_DATA_MAORI : POP_DATA_NZENG;
@@ -1876,6 +1888,16 @@ function parseAndDisplay(csvText, fileName) {
   // Calculate SRT: average of decibels_signal from trial 7 onward (0-indexed: trials[7..end])
   const srtTrials = trials.filter(t => t.trialNum >= 7);
   const srt = srtTrials.reduce((s, t) => s + t.dbSignal, 0) / srtTrials.length;
+
+  // Update section headings and descriptions with appropriate pronouns
+  document.getElementById('adaptive-heading').textContent = `${Poss} Adaptive Track`;
+  document.getElementById('adaptive-desc').innerHTML = `The chart below shows how the signal level (in dB SNR) changed across ${poss} 26 trials. Green dots are trials ${verbGot} correct; red dots are incorrect. The thick blue line shows the calculated SRT — the average signal level from trials 8–26:`;
+  document.getElementById('trial-desc').innerHTML = `The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. The SRT is the average of the signal levels from trials 8 through 26. The final trial (26) is a "phantom" trial — no digits are presented, but its signal level is determined by ${poss} previous response and is included in the SRT calculation.`;
+  document.getElementById('response-col-header').textContent = isSample ? 'Response' : 'Your Response';
+  document.getElementById('srt-heading').textContent = `${Poss} SRT`;
+  document.getElementById('stat-srt-label').textContent = `${Poss} SRT`;
+  document.getElementById('context-heading').textContent = `${Poss} Result in Context`;
+  document.getElementById('context-desc').innerHTML = `The scatter plot below shows where ${poss} SRT sits relative to the population data. ${Poss} score is shown as a prominent dashed line:`;
 
   // Build trial table
   const tbody = document.querySelector('#trial-table tbody');
@@ -1906,21 +1928,21 @@ function parseAndDisplay(csvText, fileName) {
   const banner = document.getElementById('result-banner');
   banner.className = 'result-banner ' + (passed ? 'pass' : 'refer');
   banner.innerHTML = passed
-    ? `✅ <strong>PASS</strong> — Your SRT of ${srt.toFixed(1)} dB SNR is at or below the cut-off of ${srtCutoff.toFixed(1)} dB SNR.`
-    : `🔴 <strong>REFER</strong> — Your SRT of ${srt.toFixed(1)} dB SNR is above the cut-off of ${srtCutoff.toFixed(1)} dB SNR. This suggests further hearing assessment may be warranted.`;
+    ? `✅ <strong>PASS</strong> — ${Poss} SRT of ${srt.toFixed(1)} dB SNR is at or below the cut-off of ${srtCutoff.toFixed(1)} dB SNR.`
+    : `🔴 <strong>REFER</strong> — ${Poss} SRT of ${srt.toFixed(1)} dB SNR is above the cut-off of ${srtCutoff.toFixed(1)} dB SNR. This suggests further hearing assessment may be warranted.`;
 
   // Adaptive track chart
-  initAdaptiveChart(trials, srt);
+  initAdaptiveChart(trials, srt, poss);
 
   // Final scatter chart
-  initFinalScatter(popData, srt, srtCutoff, passed);
+  initFinalScatter(popData, srt, srtCutoff, passed, poss);
 
   // Show results
   document.getElementById('results-area').style.display = 'block';
   setTimeout(() => document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
-function initAdaptiveChart(trials, srt) {
+function initAdaptiveChart(trials, srt, poss) {
   if (chartAdaptive) chartAdaptive.destroy();
 
   // Null trial: keep in track line, show as grey dot, exclude from correct/incorrect
@@ -1975,7 +1997,7 @@ function initAdaptiveChart(trials, srt) {
   });
 }
 
-function initFinalScatter(popData, studentSRT, srtCutoff, passed) {
+function initFinalScatter(popData, studentSRT, srtCutoff, passed, poss) {
   if (chartFinalScatter) chartFinalScatter.destroy();
 
   // Separate pass/refer in population data
@@ -2031,7 +2053,8 @@ function initFinalScatter(popData, studentSRT, srtCutoff, passed) {
         c.font = 'bold 13px DM Sans';
         c.fillStyle = passed ? '#2d8a4e' : '#c0392b';
         c.textAlign = 'right';
-        c.fillText(`Your SRT: ${studentSRT.toFixed(1)} dB SNR`, right - 4, ystu - 8);
+        const Poss = poss.charAt(0).toUpperCase() + poss.slice(1);
+        c.fillText(`${Poss} SRT: ${studentSRT.toFixed(1)} dB SNR`, right - 4, ystu - 8);
 
         c.restore();
       }
