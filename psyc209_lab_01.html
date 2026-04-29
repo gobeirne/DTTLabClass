@@ -472,8 +472,8 @@ body {
   .roc-mobile-stats { display: block; }
   .roc-stats-grid {
     display: grid !important;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 6px;
   }
   .roc-stats-grid .stat-card {
     min-width: unset;
@@ -753,8 +753,8 @@ body {
       <table class="confusion-table">
         <tr><th></th><th colspan="2">Screening Test</th></tr>
         <tr><th></th><th>Refer</th><th>Pass</th></tr>
-        <tr><th>Condition Present<br/>(4FA &gt; cut-off)</th><td class="cell-tp">Hit (TP)</td><td class="cell-fn">Miss (FN)</td></tr>
-        <tr><th>Condition Absent<br/>(4FA ≤ cut-off)</th><td class="cell-fp">False Alarm (FP)</td><td class="cell-tn">Correct Reject (TN)</td></tr>
+        <tr><th>Condition Present<br/>(4FA ≥ cut-off)</th><td class="cell-tp">Hit (TP)</td><td class="cell-fn">Miss (FN)</td></tr>
+        <tr><th>Condition Absent<br/>(4FA &lt; cut-off)</th><td class="cell-fp">False Alarm (FP)</td><td class="cell-tn">Correct Reject (TN)</td></tr>
       </table>
 
       <div class="def-box">
@@ -915,14 +915,16 @@ body {
         <!-- Mobile-only stat boxes (hidden on desktop via CSS) -->
         <div class="roc-mobile-stats" id="roc-mobile-stats">
           <div class="stats-row roc-stats-grid">
-            <div class="stat-card green"><span class="stat-label">Optimal cut-off</span><div class="stat-value" id="stat-optimal-co-m">—</div></div>
-            <div class="stat-card green"><span class="stat-label">Sens @ optimal</span><div class="stat-value" id="stat-opt-sens-m">—</div></div>
-            <div class="stat-card green"><span class="stat-label">Spec @ optimal</span><div class="stat-value" id="stat-opt-spec-m">—</div></div>
+            <div class="stat-card green"><span class="stat-label">Optimal</span><div class="stat-value" id="stat-optimal-co-m">—</div></div>
+            <div class="stat-card green"><span class="stat-label">Sens</span><div class="stat-value" id="stat-opt-sens-m">—</div></div>
+            <div class="stat-card green"><span class="stat-label">Spec</span><div class="stat-value" id="stat-opt-spec-m">—</div></div>
+            <div class="stat-card green"><span class="stat-label">J</span><div class="stat-value" id="stat-opt-j-m">—</div></div>
           </div>
           <div class="stats-row roc-stats-grid">
-            <div class="stat-card blue"><span class="stat-label">Current cut-off</span><div class="stat-value" id="stat-cur-co-m">—</div></div>
-            <div class="stat-card blue"><span class="stat-label">Sens @ current</span><div class="stat-value" id="stat-cur-sens-m">—</div></div>
-            <div class="stat-card blue"><span class="stat-label">Spec @ current</span><div class="stat-value" id="stat-cur-spec-m">—</div></div>
+            <div class="stat-card blue"><span class="stat-label">Current</span><div class="stat-value" id="stat-cur-co-m">—</div></div>
+            <div class="stat-card blue"><span class="stat-label">Sens</span><div class="stat-value" id="stat-cur-sens-m">—</div></div>
+            <div class="stat-card blue"><span class="stat-label">Spec</span><div class="stat-value" id="stat-cur-spec-m">—</div></div>
+            <div class="stat-card blue"><span class="stat-label">J</span><div class="stat-value" id="stat-cur-j-m">—</div></div>
           </div>
         </div>
       </div>
@@ -1185,7 +1187,7 @@ window.switchLanguage = function(lang) {
 function computeMetrics(data, hlCut, srtCut) {
   let tp=0, tn=0, fp=0, fn=0;
   for (const [hl, srt] of data) {
-    const hasCondition = hl > hlCut;
+    const hasCondition = hl >= hlCut;
     const testRefers = srt > srtCut;  // less negative = worse = refer
     if (hasCondition && testRefers) tp++;
     else if (hasCondition && !testRefers) fn++;
@@ -1349,7 +1351,7 @@ window.updateQuadrantChart = function() {
 
   const tp=[], tn=[], fp=[], fn=[];
   for (const [hl, srt] of getPopData()) {
-    const hasCondition = hl > hlCut;
+    const hasCondition = hl >= hlCut;
     const testRefers = srt > srtCut;
     const pt = {x: hl, y: srt};
     if (hasCondition && testRefers) tp.push(pt);
@@ -1693,6 +1695,8 @@ function initROCChart() {
       afterDraw(chart) {
         const { ctx: c, chartArea: { left, right, top, bottom } } = chart;
         const isMobile = window.innerWidth <= 600;
+        const optJ = (rocBestSens + rocBestSpec - 1).toFixed(3);
+        const curJ = (rocCurSens + rocCurSpec - 1).toFixed(3);
         c.save();
 
         if (isMobile) {
@@ -1704,8 +1708,8 @@ function initROCChart() {
         } else {
           // Desktop: full stats overlay in bottom-right area
           const ox = left + (right - left) * 0.52;
-          const oy = top + (bottom - top) * 0.52;
-          const lh = 18;
+          const oy = top + (bottom - top) * 0.48;
+          const lh = 17;
 
           c.font = 'bold 14px DM Sans';
           c.fillStyle = '#1a5276';
@@ -1715,11 +1719,11 @@ function initROCChart() {
           c.font = '12px DM Sans';
           c.fillStyle = '#2d8a4e';
           c.fillText(`◆ Optimal: ${rocBestCo.toFixed(1)} dB SNR`, ox, oy + lh * 1.5);
-          c.fillText(`   Sens ${(rocBestSens * 100).toFixed(0)}%  Spec ${(rocBestSpec * 100).toFixed(0)}%`, ox, oy + lh * 2.5);
+          c.fillText(`   Sens ${(rocBestSens * 100).toFixed(0)}%  Spec ${(rocBestSpec * 100).toFixed(0)}%  J = ${optJ}`, ox, oy + lh * 2.5);
 
           c.fillStyle = '#c0392b';
           c.fillText(`● Current: ${rocCurCo.toFixed(1)} dB SNR`, ox, oy + lh * 4);
-          c.fillText(`   Sens ${(rocCurSens * 100).toFixed(0)}%  Spec ${(rocCurSpec * 100).toFixed(0)}%`, ox, oy + lh * 5);
+          c.fillText(`   Sens ${(rocCurSens * 100).toFixed(0)}%  Spec ${(rocCurSpec * 100).toFixed(0)}%  J = ${curJ}`, ox, oy + lh * 5);
         }
         c.restore();
       }
@@ -1762,15 +1766,16 @@ function buildROCData(hlCut) {
 }
 
 function updateROCMobileStats() {
-  // Update mobile stat boxes
   const el = (id) => document.getElementById(id);
   if (el('stat-optimal-co-m')) {
     el('stat-optimal-co-m').textContent = rocBestCo.toFixed(1) + ' dB';
     el('stat-opt-sens-m').textContent = (rocBestSens * 100).toFixed(0) + '%';
     el('stat-opt-spec-m').textContent = (rocBestSpec * 100).toFixed(0) + '%';
+    el('stat-opt-j-m').textContent = (rocBestSens + rocBestSpec - 1).toFixed(3);
     el('stat-cur-co-m').textContent = rocCurCo.toFixed(1) + ' dB';
     el('stat-cur-sens-m').textContent = (rocCurSens * 100).toFixed(0) + '%';
     el('stat-cur-spec-m').textContent = (rocCurSpec * 100).toFixed(0) + '%';
+    el('stat-cur-j-m').textContent = (rocCurSens + rocCurSpec - 1).toFixed(3);
   }
 }
 
@@ -2049,24 +2054,32 @@ window.loadDummyData = function() {
 function parseAndDisplay(csvText, fileName, isSample) {
   // Sanitise: trim whitespace, normalise line endings, skip blank lines
   const lines = csvText.trim().replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').filter(l => l.trim() !== '');
-  const header = lines[0].replace(/"/g, '').split(',');
+
+  // Auto-detect delimiter: if header contains tabs, use tab; otherwise comma
+  const headerRaw = lines[0];
+  const delimiter = headerRaw.includes('\t') ? '\t' : ',';
+
+  const header = headerRaw.replace(/"/g, '').split(delimiter);
   const trials = [];
   for (let i = 1; i < lines.length; i++) {
-    const cols = lines[i].trim().replace(/"/g, '').split(',');
+    const cols = lines[i].trim().replace(/"/g, '').split(delimiter);
     if (cols.length < 5) continue;
     const trialNum = parseInt(cols[0]);
     if (isNaN(trialNum)) continue;
     const dbSignal = parseInt(cols[1]);
     if (isNaN(dbSignal)) continue;
-    const correctAns = cols[2];
-    const partAns = cols[3];
+    const correctAns = cols[2].trim();
+    const partAns = cols[3].trim();
     const correct = cols[4].trim().toLowerCase() === 'true';
-    // Include all trials (including trial 25 which may have null response — 
-    // it's included in SRT so that the last trial's correctness matters)
-    trials.push({ trialNum, dbSignal, correctAns: correctAns || '—', partAns: partAns === 'null' ? '—' : partAns, correct });
+    trials.push({ trialNum, dbSignal, correctAns: correctAns || '—', partAns: (partAns === 'null' || partAns === '') ? '—' : partAns, correct });
   }
 
   if (trials.length < 10) throw new Error('Not enough valid trials found in the file.');
+
+  // SRT calculation: drop first 7 trials, average the rest (works for both 26- and 28-trial versions)
+  const totalTrials = trials.length;
+  const srtTrials = trials.filter(t => t.trialNum >= 7);
+  const srt = srtTrials.reduce((s, t) => s + t.dbSignal, 0) / srtTrials.length;
 
   // Pronouns: "your" / "you" for real data, "their" / "they" for sample
   const poss = isSample ? 'their' : 'your';    // your / their
@@ -2093,14 +2106,12 @@ function parseAndDisplay(csvText, fileName, isSample) {
   const popData = getPopData();
   const srtCutoff = getSRTCutoff();
 
-  // Calculate SRT: average of decibels_signal from trial 7 onward (0-indexed: trials[7..end])
-  const srtTrials = trials.filter(t => t.trialNum >= 7);
-  const srt = srtTrials.reduce((s, t) => s + t.dbSignal, 0) / srtTrials.length;
-
   // Update section headings and descriptions with appropriate pronouns
+  const lastTrial = totalTrials;
+  const srtStartTrial = 8;
   document.getElementById('adaptive-heading').textContent = `${Poss} Adaptive Track`;
-  document.getElementById('adaptive-desc').innerHTML = `The chart below shows how the signal level (in dB SNR) changed across ${poss} 26 trials. Green dots are trials ${verbGot} correct; red dots are incorrect. The thick blue line shows the calculated SRT — the average signal level from trials 8–26:`;
-  document.getElementById('trial-desc').innerHTML = `The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. The SRT is the average of the signal levels from trials 8 through 26. The final trial (26) is a "phantom" trial — no digits are presented, but its signal level is determined by ${poss} previous response and is included in the SRT calculation.`;
+  document.getElementById('adaptive-desc').innerHTML = `The chart below shows how the signal level (in dB SNR) changed across ${poss} ${totalTrials} trials. Green dots are trials ${verbGot} correct; red dots are incorrect. The thick blue line shows the calculated SRT — the average signal level from trials ${srtStartTrial}–${lastTrial}:`;
+  document.getElementById('trial-desc').innerHTML = `The first 7 trials (shaded) are excluded from the SRT calculation — they allow the adaptive track to settle. The SRT is the average of the signal levels from trials ${srtStartTrial} through ${lastTrial}. The final trial (${lastTrial}) is a "phantom" trial — no digits are presented, but its signal level is determined by ${poss} previous response and is included in the SRT calculation.`;
   document.getElementById('response-col-header').textContent = isSample ? 'Response' : 'Your Response';
   document.getElementById('srt-heading').textContent = `${Poss} SRT`;
   document.getElementById('stat-srt-label').textContent = `${Poss} SRT`;
