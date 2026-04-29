@@ -678,7 +678,18 @@ body {
         <button class="tone-btn" onclick="playTone(4000, this)">4 kHz</button>
       </div>
 
-      <p style="margin-top:16px;">Here is the data showing the test SRTs scored by 161 people with different hearing levels. Each dot represents one person — their pure-tone average (gold standard) on the x-axis and their screening test SRT on the y-axis:</p>
+      <p style="margin-top:16px;">We conducted this research in both New Zealand English and te reo Māori. Choose which dataset you'd like to explore:</p>
+
+      <div class="demo-box" style="padding:14px 20px;">
+        <label style="font-weight:600; cursor:pointer; margin-right:20px;">
+          <input type="radio" name="lang-select" value="eng" checked onchange="switchLanguage('eng')"/> NZ English <span style="color:var(--text-muted); font-weight:400;">(161 participants)</span>
+        </label>
+        <label style="font-weight:600; cursor:pointer;">
+          <input type="radio" name="lang-select" value="mri" onchange="switchLanguage('mri')"/> Te reo Māori <span style="color:var(--text-muted); font-weight:400;">(76 participants)</span>
+        </label>
+      </div>
+
+      <p style="margin-top:12px;" id="scatter-desc">Here is the data showing the test SRTs scored by <span id="n-participants">161</span> people with different hearing levels. Each dot represents one person — their pure-tone average (gold standard) on the x-axis and their screening test SRT on the y-axis:</p>
 
       <div class="chart-wrap"><canvas id="chart-scatter1"></canvas></div>
 
@@ -862,6 +873,13 @@ body {
             <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-comb-sens-final">—</div></div>
             <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-comb-spec-final">—</div></div>
             <div class="stat-card"><span class="stat-label">Youden's J</span><div class="stat-value" id="stat-comb-j">—</div></div>
+          </div>
+
+          <div id="maori-cutoff-note" style="display:none;">
+            <div class="def-box" style="margin-top:16px; border-left-color: var(--blue);">
+              <span class="def-term" style="color: var(--blue);">A note on the te reo Māori cut-off</span><br/>
+              The Youden-optimal cut-off maximises the combined sensitivity and specificity equally. However, for the te reo Māori version of the test, we chose a cut-off of <strong>−9.5 dB SNR</strong> rather than the Youden optimum. This was a deliberate decision to prioritise higher sensitivity — ensuring that more people who do have a hearing loss are correctly identified — at the expense of somewhat lower specificity. In a screening context, it is generally better to over-refer (false positives) than to miss someone who needs help (false negatives).
+            </div>
           </div>
         </div>
       </div>
@@ -1062,11 +1080,34 @@ const POP_DATA_NZENG = [
 ];
 
 /* Placeholder for te reo Māori population data */
-const POP_DATA_MAORI = null; // Will be populated later
+const POP_DATA_MAORI = [
+  [8.75,-13],[15,-13.7],[47.5,-9.3],[60,-8.4],[5,-10.1],
+  [2.5,-13.3],[16.25,-14.7],[12.5,-10.7],[15,-12.4],[8.75,-12.8],
+  [16.25,-9.7],[12.5,-14.5],[10,-13.1],[38.75,-7.2],[10,-10.5],
+  [26.25,3.6],[21.25,-11.8],[26.25,-8],[47.5,-12],[17.5,-8.2],
+  [13.5,-12],[55,1.5],[2.5,-10.095],[-1.25,-9.905],[-1.25,-12],
+  [8.75,-12.762],[6.25,-7.619],[3.75,-8.19],[7.5,-10.286],[8.75,-8.19],
+  [13.75,-6.286],[5,-10.095],[8.75,-10.476],[8.75,-9.905],[6.25,-8.952],
+  [15,-12.19],[8.75,-10.857],[40,-4.762],[-2.5,-10.286],[1.25,-12],
+  [6.25,-8.762],[23.75,-8.762],[25,-0.952],[88.75,-5.143],[31.25,0.381],
+  [56.25,0.19],[50,-7.238],[41.25,6.857],[57.5,0.381],[21.25,-1.143],
+  [40,6.476],[25,-3.429],[35,-8.19],[27.5,-3.81],[41.25,0.762],
+  [36.25,-5.524],[60,4.952],[47.5,-3.238],[38.75,-9.143],[55,-9.714],
+  [8.75,-9.524],[7.5,-6.286],[6.25,-7.048],[7.5,-5.524],[30,-8.381],
+  [10,-7.048],[6.25,-12.952],[12.5,-7.619],[6.25,-11.81],[10,2.095],
+  [6.25,-9.333],[11.25,-10.476],[11.25,-8.19],[-1.25,-12.952],
+  [11.25,-11.238],[7.5,-10.095]
+];
 
 /* Default cut-offs */
 const DEFAULT_HL_CUTOFF = 25;
-const DEFAULT_SRT_CUTOFF = -15.9;
+const DEFAULT_SRT_CUTOFF_ENG = -15.9;
+const DEFAULT_SRT_CUTOFF_MAORI = -9.5;
+
+/* Active language state */
+let activeLang = 'eng'; // 'eng' or 'mri'
+function getPopData() { return activeLang === 'mri' ? POP_DATA_MAORI : POP_DATA_NZENG; }
+function getSRTCutoff() { return activeLang === 'mri' ? DEFAULT_SRT_CUTOFF_MAORI : DEFAULT_SRT_CUTOFF_ENG; }
 
 /* ===================================================================
    PROGRESSIVE REVEAL SYSTEM
@@ -1122,6 +1163,23 @@ window.playTone = function(freq, btn) {
 };
 
 /* ===================================================================
+   LANGUAGE SWITCHING
+   =================================================================== */
+window.switchLanguage = function(lang) {
+  activeLang = lang;
+  const n = lang === 'mri' ? 76 : 161;
+  document.getElementById('n-participants').textContent = n;
+
+  // Rebuild whichever charts are currently visible
+  if (chartScatter1) { chartScatter1.destroy(); chartScatter1 = null; initScatter1(); }
+  if (chartQuadrant) { chartQuadrant.destroy(); chartQuadrant = null; initQuadrantChart(); }
+  if (chartSensExplore) { chartSensExplore.destroy(); chartSensExplore = null; sensExplorePoints = []; initSensExploreChart(); }
+  if (chartSpecExplore) { chartSpecExplore.destroy(); chartSpecExplore = null; specExplorePoints = []; initSpecExploreChart(); }
+  if (chartCombined) { chartCombined.destroy(); chartCombined = null; initCombinedChart(); }
+  if (chartROC) { chartROC.destroy(); chartROC = null; initROCChart(); }
+};
+
+/* ===================================================================
    UTILITY: Compute sens, spec, etc at given cut-offs
    =================================================================== */
 function computeMetrics(data, hlCut, srtCut) {
@@ -1166,7 +1224,7 @@ function initScatter1() {
     data: {
       datasets: [{
         label: 'Participants',
-        data: POP_DATA_NZENG.map(([x, y]) => ({x, y})),
+        data: getPopData().map(([x, y]) => ({x, y})),
         backgroundColor: 'rgba(44, 120, 70, 0.5)',
         borderColor: 'rgba(44, 120, 70, 0.7)',
         pointRadius: 4,
@@ -1192,7 +1250,7 @@ function initScatter1() {
         },
         y: {
           title: { display: true, text: 'SRT (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } },
-          min: -22, max: 5
+          min: -22, max: 8
         }
       }
     }
@@ -1233,7 +1291,7 @@ function initQuadrantChart() {
         },
         y: {
           title: { display: true, text: 'SRT (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } },
-          min: -22, max: 5
+          min: -22, max: 8
         }
       },
       // Custom plugin for dashed cut-off lines
@@ -1288,7 +1346,7 @@ window.updateQuadrantChart = function() {
   document.getElementById('val-srt').textContent = srtCut.toFixed(1) + ' dB SNR';
 
   const tp=[], tn=[], fp=[], fn=[];
-  for (const [hl, srt] of POP_DATA_NZENG) {
+  for (const [hl, srt] of getPopData()) {
     const hasCondition = hl > hlCut;
     const testRefers = srt > srtCut;
     const pt = {x: hl, y: srt};
@@ -1309,9 +1367,9 @@ window.updateQuadrantChart = function() {
   document.getElementById('stat-fn').textContent = fn.length;
 
   // Also update sensitivity/specificity if visible
-  const m = computeMetrics(POP_DATA_NZENG, hlCut, srtCut);
+  const m = computeMetrics(getPopData(), hlCut, srtCut);
   // Update formula displays in 9c
-  const total = POP_DATA_NZENG.length;
+  const total = getPopData().length;
   const fSens = document.getElementById('formula-sens');
   const fSpec = document.getElementById('formula-spec');
   const fAcc = document.getElementById('formula-acc');
@@ -1374,7 +1432,7 @@ function initSensExploreChart() {
 window.updateSensExplore = function() {
   const val = parseFloat(document.getElementById('slider-sens-explore').value);
   document.getElementById('val-sens-explore').textContent = val.toFixed(1) + ' dB SNR';
-  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
+  const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, val);
   document.getElementById('stat-sens-ex').textContent = (m.sens * 100).toFixed(1) + '%';
 
   // Add point if not already close
@@ -1436,7 +1494,7 @@ function initSpecExploreChart() {
 window.updateSpecExplore = function() {
   const val = parseFloat(document.getElementById('slider-spec-explore').value);
   document.getElementById('val-spec-explore').textContent = val.toFixed(1) + ' dB SNR';
-  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
+  const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, val);
   document.getElementById('stat-spec-ex').textContent = (m.spec * 100).toFixed(1) + '%';
 
   const last = specExplorePoints[specExplorePoints.length - 1];
@@ -1462,7 +1520,7 @@ function initCombinedChart() {
   const sensData = [], specData = [];
   bestYoudenJ = -1;
   for (let co = -22; co <= 0; co += 0.2) {
-    const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
+    const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, co);
     sensData.push({ x: co, y: m.sens });
     specData.push({ x: co, y: m.spec });
     const j = m.sens + m.spec - 1;
@@ -1507,7 +1565,7 @@ function initCombinedChart() {
 window.updateCombinedChart = function() {
   const val = parseFloat(document.getElementById('slider-combined').value);
   document.getElementById('val-combined').textContent = val.toFixed(1) + ' dB SNR';
-  const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, val);
+  const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, val);
   document.getElementById('stat-comb-sens').textContent = (m.sens * 100).toFixed(1) + '%';
   document.getElementById('stat-comb-spec').textContent = (m.spec * 100).toFixed(1) + '%';
   chartCombined.update('none');
@@ -1525,7 +1583,7 @@ window.lockInChoice = function() {
   // Add Youden curve to chart
   const youdenData = [];
   for (let co = -22; co <= 0; co += 0.2) {
-    const m = computeMetrics(POP_DATA_NZENG, DEFAULT_HL_CUTOFF, co);
+    const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, co);
     youdenData.push({ x: co, y: m.sens + m.spec - 1 });
   }
   chartCombined.data.datasets.push({
@@ -1558,14 +1616,12 @@ window.lockInChoice = function() {
   // Reveal
   document.getElementById('youden-reveal').style.display = 'block';
   document.getElementById('sec9g-continue').style.display = 'block';
+  document.getElementById('maori-cutoff-note').style.display = activeLang === 'mri' ? 'block' : 'none';
   combinedYoudenRevealed = true;
 
   setTimeout(() => document.getElementById('youden-reveal').scrollIntoView({ behavior: 'smooth' }), 100);
 };
 
-/* ===================================================================
-   SECTION 9h: ROC curve
-   =================================================================== */
 /* ===================================================================
    SECTION 9h: ROC curve with HL slider and on-canvas stats
    =================================================================== */
@@ -1673,7 +1729,7 @@ function buildROCData(hlCut) {
   let bestJ = -1;
   rocBestCo = 0; rocBestSens = 0; rocBestSpec = 0;
   for (let co = -24; co <= 2; co += 0.05) {
-    const m = computeMetrics(POP_DATA_NZENG, hlCut, co);
+    const m = computeMetrics(getPopData(), hlCut, co);
     const fpr = 1 - m.spec;
     rawPoints.push({ x: fpr, y: m.sens, co });
     const j = m.sens + m.spec - 1;
@@ -1750,7 +1806,7 @@ window.rebuildROC = function() {
 window.updateROCSlider = function() {
   const val = parseFloat(document.getElementById('slider-roc').value);
   document.getElementById('val-roc').textContent = val.toFixed(1) + ' dB SNR';
-  const m = computeMetrics(POP_DATA_NZENG, rocHLCut, val);
+  const m = computeMetrics(getPopData(), rocHLCut, val);
   rocCurCo = val;
   rocCurSens = m.sens;
   rocCurSpec = m.spec;
@@ -1935,6 +1991,7 @@ window.handlePastedCSV = function() {
 const SAMPLE_DATASETS = [
   {
     name: 'Sample participant (NZ English)',
+    lang: 'eng',
     csv: `"trial_number","decibels_signal","correct_answer","participant_answer","correct"
 0,2,"849","849",true
 1,-2,"682","682",true
@@ -1968,8 +2025,14 @@ const SAMPLE_DATASETS = [
 window.loadDummyData = function() {
   const errEl = document.getElementById('csv-error');
   errEl.style.display = 'none';
-  // Pick a random sample dataset
-  const sample = SAMPLE_DATASETS[Math.floor(Math.random() * SAMPLE_DATASETS.length)];
+  // Filter samples by current language
+  const langSamples = SAMPLE_DATASETS.filter(s => s.lang === activeLang);
+  if (langSamples.length === 0) {
+    errEl.textContent = 'No sample data available for the currently selected language yet. Try switching to NZ English.';
+    errEl.style.display = 'block';
+    return;
+  }
+  const sample = langSamples[Math.floor(Math.random() * langSamples.length)];
   try {
     parseAndDisplay(sample.csv, sample.name, true);
   } catch (ex) {
@@ -2008,10 +2071,22 @@ function parseAndDisplay(csvText, fileName, isSample) {
   const obj  = isSample ? 'them' : 'you';       // you / them
   const verbGot = isSample ? 'they got' : 'you got';
 
-  // Detect language from filename (placeholder — Māori files will have different naming)
-  const isMaori = /maori|reo|mri/i.test(fileName);
-  const popData = (isMaori && POP_DATA_MAORI) ? POP_DATA_MAORI : POP_DATA_NZENG;
-  const srtCutoff = DEFAULT_SRT_CUTOFF; // May differ for Māori later
+  // Detect language from digit content:
+  // English digits include "4" but not "7"; Māori digits include "7" but not "4"
+  const allCorrectAnswers = trials.map(t => t.correctAns).join('');
+  const has4 = allCorrectAnswers.includes('4');
+  const has7 = allCorrectAnswers.includes('7');
+  const isMaori = has7 && !has4;
+  if (isMaori) {
+    activeLang = 'mri';
+    document.querySelector('input[name="lang-select"][value="mri"]').checked = true;
+  } else {
+    activeLang = 'eng';
+    document.querySelector('input[name="lang-select"][value="eng"]').checked = true;
+  }
+  document.getElementById('n-participants').textContent = getPopData().length;
+  const popData = getPopData();
+  const srtCutoff = getSRTCutoff();
 
   // Calculate SRT: average of decibels_signal from trial 7 onward (0-indexed: trials[7..end])
   const srtTrials = trials.filter(t => t.trialNum >= 7);
@@ -2146,7 +2221,7 @@ function initFinalScatter(popData, studentSRT, srtCutoff, passed, poss) {
       plugins: { legend: { position: 'top' } },
       scales: {
         x: { title: { display: true, text: 'Poorer-ear 4FA (0.5, 1, 2, 4 kHz) — dB HL', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -10, max: 120 },
-        y: { title: { display: true, text: 'SRT (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -25, max: 5 }
+        y: { title: { display: true, text: 'SRT (dB SNR)', font: { family: 'DM Sans', size: 13, weight: '600' } }, min: -25, max: 8 }
       }
     },
     plugins: [{
