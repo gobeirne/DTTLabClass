@@ -894,7 +894,7 @@ body {
       <h3>The ROC Curve</h3>
       <p>The same data can also be plotted as a <strong>Receiver Operating Characteristic (ROC)</strong> curve. This plots sensitivity (y-axis) against 1 − specificity (x-axis) for every possible cut-off. A perfect test would have a curve that goes straight up to the top-left corner.</p>
       <p>The <strong>area under the curve (AUC)</strong> summarises the test's overall discriminating ability. An AUC of 1.0 is perfect; 0.5 is no better than chance.</p>
-      <p>Try dragging the cut-off slider — the marker moves along the ROC curve. When you let go, it springs back to the Youden-optimal point:</p>
+      <p>Try dragging the cut-off slider — the marker moves along the ROC curve. When you let go, it springs back to the cut-off used in the test:</p>
 
       <div class="demo-box interactive">
         <div class="slider-group">
@@ -978,7 +978,7 @@ body {
         <input type="file" id="csv-input" accept=".csv" onchange="handleCSV(this.files[0])"/>
       </div>
 
-      <p style="margin-top:12px; font-size:0.9rem;">Or paste your CSV data directly:</p>
+      <p style="margin-top:12px; font-size:0.9rem;">Or paste your data directly:</p>
       <textarea id="csv-paste" rows="6" placeholder="Paste the contents of your .csv file here..." style="width:100%; font-family:var(--font-mono); font-size:0.8rem; padding:10px; border:1px solid var(--border); border-radius:6px; resize:vertical;"></textarea>
       <div style="margin-top:6px;">
         <button class="btn btn-secondary" onclick="handlePastedCSV()">Load pasted data</button>
@@ -1572,8 +1572,10 @@ window.updateCombinedChart = function() {
   const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, val);
   document.getElementById('stat-comb-sens').textContent = (m.sens * 100).toFixed(1) + '%';
   document.getElementById('stat-comb-spec').textContent = (m.spec * 100).toFixed(1) + '%';
-  // After Youden reveal, also update J display
+  // After Youden reveal, keep the revealed Sens/Spec/J stats matched to the current slider value
   if (combinedYoudenRevealed) {
+    document.getElementById('stat-comb-sens-final').textContent = (m.sens * 100).toFixed(1) + '%';
+    document.getElementById('stat-comb-spec-final').textContent = (m.spec * 100).toFixed(1) + '%';
     document.getElementById('stat-comb-j').textContent = (m.sens + m.spec - 1).toFixed(3);
   }
   chartCombined.update('none');
@@ -1641,11 +1643,13 @@ function initROCChart() {
   buildROCData(rocHLCut);
 
   const sliderEl = document.getElementById('slider-roc');
-  sliderEl.value = rocBestCo;
-  rocCurCo = rocBestCo;
-  rocCurSens = rocBestSens;
-  rocCurSpec = rocBestSpec;
-  document.getElementById('val-roc').textContent = rocBestCo.toFixed(1) + ' dB SNR';
+  const testCutoff = getSRTCutoff();
+  const testCutoffMetrics = computeMetrics(getPopData(), rocHLCut, testCutoff);
+  sliderEl.value = testCutoff;
+  rocCurCo = testCutoff;
+  rocCurSens = testCutoffMetrics.sens;
+  rocCurSpec = testCutoffMetrics.spec;
+  document.getElementById('val-roc').textContent = testCutoff.toFixed(1) + ' dB SNR';
   document.getElementById('val-roc-hl').textContent = rocHLCut + ' dB HL';
 
   const ctx = document.getElementById('chart-roc').getContext('2d');
@@ -1674,7 +1678,7 @@ function initROCChart() {
         },
         {
           label: 'Current cut-off',
-          data: [{ x: 1 - rocBestSpec, y: rocBestSens }],
+          data: [{ x: 1 - rocCurSpec, y: rocCurSens }],
           backgroundColor: '#c0392b', borderColor: '#fff',
           pointRadius: 10, pointStyle: 'circle', borderWidth: 2
         }
@@ -1799,14 +1803,16 @@ window.rebuildROC = function() {
   chartROC.data.datasets[0].data = window._rocCurve;
   chartROC.data.datasets[1].data = [{ x: 1 - rocBestSpec, y: rocBestSens }];
 
-  // Reset SRT slider to new optimum
+  // Reset SRT slider to the cut-off used in the test
   const sliderEl = document.getElementById('slider-roc');
-  sliderEl.value = rocBestCo;
-  rocCurCo = rocBestCo;
-  rocCurSens = rocBestSens;
-  rocCurSpec = rocBestSpec;
-  document.getElementById('val-roc').textContent = rocBestCo.toFixed(1) + ' dB SNR';
-  chartROC.data.datasets[3].data = [{ x: 1 - rocBestSpec, y: rocBestSens }];
+  const testCutoff = getSRTCutoff();
+  const testCutoffMetrics = computeMetrics(getPopData(), rocHLCut, testCutoff);
+  sliderEl.value = testCutoff;
+  rocCurCo = testCutoff;
+  rocCurSens = testCutoffMetrics.sens;
+  rocCurSpec = testCutoffMetrics.spec;
+  document.getElementById('val-roc').textContent = testCutoff.toFixed(1) + ' dB SNR';
+  chartROC.data.datasets[3].data = [{ x: 1 - rocCurSpec, y: rocCurSens }];
 
   chartROC.update();
   updateROCMobileStats();
@@ -1829,7 +1835,7 @@ window.updateROCSlider = function() {
 
 window.springROCBack = function() {
   const slider = document.getElementById('slider-roc');
-  const target = window._rocBestCo || -15.9;
+  const target = getSRTCutoff();
   const start = parseFloat(slider.value);
   const duration = 400;
   const startTime = performance.now();
