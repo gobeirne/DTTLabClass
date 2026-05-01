@@ -916,15 +916,11 @@ body {
 
     <div class="nav-bar">
       <button class="btn btn-secondary" onclick="goBack()">← Back</button>
-      <button class="btn btn-primary" onclick="revealNext(12)">Continue →</button>
+      <button class="btn btn-primary" onclick="revealSDTOnPage12()">Continue →</button>
     </div>
-  </div>
 
-  <!-- ============================================================ -->
-  <!-- PAGE 13: SDT revisited + Sensitivity & Specificity            -->
-  <!-- ============================================================ -->
-  <div class="lab-section" id="sec-sdt-sensspec" data-section="13">
-    <h2>13. Signal Detection Theory Revisited</h2>
+    <div id="sdt-revisit-content" style="display:none; margin-top:28px; padding-top:20px; border-top:1px solid var(--border);">
+    <h3>Signal Detection Theory Revisited</h3>
 
     <p>If this is all starting to sound a bit familiar, that's because we are conceptualising our hearing test in terms of Signal Detection Theory (SDT), which we learned about back in Lecture 2. Remember Nicky mentioned that there were loads of real-world contexts where SDT is useful – screening tests like these are one of them. Rather than applying to an individual's performance on the test though (like some of the psychophysics examples we discussed previously), here we can apply SDT to the performance of the screening test itself.</p>
 
@@ -955,8 +951,14 @@ body {
       The proportion of all results that are correct (either true positives or true negatives).
     </div>
 -->
-    <p>These values update live as you adjust the sliders on the chart above.</p>
+    <p>Observe how these values update live as you adjust the sliders on the chart above.</p>
 
+    <div class="nav-bar" id="quick-check-reveal-nav">
+      <button class="btn btn-secondary" onclick="goBack()">← Back</button>
+      <button class="btn btn-primary" onclick="revealQuickCheckOnPage12()">Continue →</button>
+    </div>
+
+    <div id="quick-check-content" style="display:none; margin-top:24px;">
     <h3>Quick Check</h3>
     <p>When choosing a test cut-off, is it best to:</p>
 
@@ -969,16 +971,18 @@ body {
     <div id="sec9d-continue" style="display:none;">
       <div class="nav-bar">
         <button class="btn btn-secondary" onclick="goBack()">← Back</button>
-        <button class="btn btn-primary" onclick="revealNext(13)">Continue →</button>
+        <button class="btn btn-primary" onclick="revealNext(12)">Continue →</button>
       </div>
+    </div>
+    </div>
     </div>
   </div>
 
   <!-- ============================================================ -->
-  <!-- PAGE 14: Exploring Sensitivity                                -->
+  <!-- PAGE 13: Exploring Sensitivity                                -->
   <!-- ============================================================ -->
-  <div class="lab-section" id="sec-sens-explore" data-section="14">
-    <h2>14. Exploring Sensitivity</h2>
+  <div class="lab-section" id="sec-sens-explore" data-section="13">
+    <h2>13. Exploring Sensitivity</h2>
     <p>Sensitivity is the proportion of people with the condition that the test correctly identifies. Drag the slider from left to right to trace the sensitivity curve. The curve plots sensitivity at each possible test cut-off:</p>
 
     <div class="demo-box interactive">
@@ -995,15 +999,15 @@ body {
 
     <div class="nav-bar">
       <button class="btn btn-secondary" onclick="goBack()">← Back</button>
-      <button class="btn btn-primary" onclick="revealNext(14)">Continue →</button>
+      <button class="btn btn-primary" onclick="revealNext(13)">Continue →</button>
     </div>
   </div>
 
   <!-- ============================================================ -->
   <!-- PAGE 15: Exploring Specificity                                -->
   <!-- ============================================================ -->
-  <div class="lab-section" id="sec-spec-explore" data-section="15">
-    <h2>15. Exploring Specificity</h2>
+  <div class="lab-section" id="sec-spec-explore" data-section="14">
+    <h2>14. Exploring Specificity</h2>
     <p>Now do the same for specificity — the proportion of people <em>without</em> the condition that the test correctly passes:</p>
 
     <div class="demo-box interactive">
@@ -1020,15 +1024,15 @@ body {
 
     <div class="nav-bar">
       <button class="btn btn-secondary" onclick="goBack()">← Back</button>
-      <button class="btn btn-primary" onclick="revealNext(15)">Continue →</button>
+      <button class="btn btn-primary" onclick="revealNext(14)">Continue →</button>
     </div>
   </div>
 
   <!-- ============================================================ -->
-  <!-- PAGE 16: Finding the Optimal Balance                          -->
+  <!-- PAGE 15: Finding the Optimal Balance                          -->
   <!-- ============================================================ -->
-  <div class="lab-section" id="sec-optimal" data-section="16">
-    <h2>16. Finding the Optimal Balance</h2>
+  <div class="lab-section" id="sec-optimal" data-section="15">
+    <h2>15. Finding the Optimal Balance</h2>
     <p>Now let's see both sensitivity and specificity together. Your challenge: <strong>find the test cut-off that gives the best balance between sensitivity and specificity.</strong> Move the slider and watch both values — try to find the sweet spot where both are as high as possible.</p>
 
     <div class="demo-box interactive">
@@ -1038,7 +1042,7 @@ body {
         <span class="slider-val" id="val-combined">-22.0 dB SNR</span>
       </div>
       <div class="chart-wrap"><canvas id="chart-combined"></canvas></div>
-      <div class="stats-row">
+      <div class="stats-row" id="combined-live-stats">
         <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-comb-sens">—</div></div>
         <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-comb-spec">—</div></div>
       </div>
@@ -1058,11 +1062,7 @@ body {
           The cut-off where J is maximised gives the best trade-off between sensitivity and specificity.
         </div>
 
-        <div class="stats-row" style="margin-top:12px;">
-          <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-comb-sens-final">—</div></div>
-          <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-comb-spec-final">—</div></div>
-          <div class="stat-card"><span class="stat-label">Youden's J</span><div class="stat-value" id="stat-comb-j">—</div></div>
-        </div>
+        <p style="margin-top:12px; color:var(--text-muted); font-size:0.95rem;">Go adjust the test SRT cut-off again and observe how the Youden's index (grey dashed trace) changes with sensitivity and specificity.</p>
 
         <div id="maori-cutoff-note" style="display:none;">
           <div class="def-box" style="margin-top:16px; border-left-color: var(--blue);">
@@ -1076,16 +1076,16 @@ body {
     <div id="sec9g-continue" style="display:none;">
       <div class="nav-bar">
         <button class="btn btn-secondary" onclick="goBack()">← Back</button>
-        <button class="btn btn-primary" onclick="revealNext(16)">Continue →</button>
+        <button class="btn btn-primary" onclick="revealNext(15)">Continue →</button>
       </div>
     </div>
   </div>
 
   <!-- ============================================================ -->
-  <!-- PAGE 17: The ROC Curve                                        -->
+  <!-- PAGE 16: The ROC Curve                                        -->
   <!-- ============================================================ -->
-  <div class="lab-section" id="sec-roc" data-section="17">
-    <h2>17. The ROC Curve</h2>
+  <div class="lab-section" id="sec-roc" data-section="16">
+    <h2>16. The ROC Curve</h2>
     <p>The same data can also be plotted as a <strong>Receiver Operating Characteristic (ROC)</strong> curve. This plots sensitivity (y-axis) against 1 − specificity (x-axis) for every possible cut-off. A perfect test would have a curve that goes straight up to the top-left corner.</p>
     <p>The <strong>area under the curve (AUC)</strong> summarises the test's overall discriminating ability. An AUC of 1.0 is perfect; 0.5 is no better than chance.</p>
     <p>Try dragging the cut-off slider — the marker moves along the ROC curve. When you let go, it springs back to the Youden-optimal point:</p>
@@ -1125,16 +1125,16 @@ body {
 
     <div class="nav-bar">
       <button class="btn btn-secondary" onclick="goBack()">← Back</button>
-      <button class="btn btn-primary" onclick="revealNext(17)">Continue to the Main Event →</button>
+      <button class="btn btn-primary" onclick="revealNext(16)">Continue to the Main Event →</button>
     </div>
   </div>
 
   <!-- ============================================================ -->
-  <!-- PAGE 18: THE MAIN EVENT                                       -->
+  <!-- PAGE 17: THE MAIN EVENT                                       -->
   <!-- ============================================================ -->
-  <div class="lab-section" id="sec-main" data-section="18">
+  <div class="lab-section" id="sec-main" data-section="17">
     <button class="btn btn-secondary" onclick="goBack()" style="margin-bottom:16px;">← Back</button>
-    <h2>18. The Main Event — Take the Test!</h2>
+    <h2>17. The Main Event — Take the Test!</h2>
 
     <!-- 10a: Instructions -->
     <div id="sec10a">
@@ -1324,13 +1324,18 @@ const totalPages = document.querySelectorAll('.lab-section').length;
 
 function showPage(n, shouldScroll) {
   const secs = document.querySelectorAll('.lab-section');
+  let activeSection = null;
   secs.forEach(s => {
     const sn = parseInt(s.dataset.section);
-    s.classList.toggle('active', sn === n);
+    const isActive = sn === n;
+    s.classList.toggle('active', isActive);
+    if (isActive) activeSection = s;
   });
   currentPage = n;
-  if (shouldScroll) {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (shouldScroll && activeSection) {
+    // After the first page, tuck the header just above the viewport so the white content box starts near the top.
+    const y = activeSection.getBoundingClientRect().top + window.pageYOffset - 12;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
   }
   // Init charts when their page becomes active
   if (typeof onPageShow === 'function') onPageShow(n);
@@ -1346,6 +1351,27 @@ window.revealNext = function(currentSection) {
 
 window.goBack = function() {
   if (currentPage > 1) showPage(currentPage - 1, true);
+};
+
+window.revealSDTOnPage12 = function() {
+  const sdt = document.getElementById('sdt-revisit-content');
+  const statsEl = document.getElementById('quad-sens-spec-stats');
+  if (statsEl) { statsEl.style.display = 'flex'; statsEl.classList.add('show-grid'); }
+  if (sdt) {
+    sdt.style.display = 'block';
+    sdt.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  if (chartQuadrant) updateQuadrantChart();
+};
+
+window.revealQuickCheckOnPage12 = function() {
+  const nav = document.getElementById('quick-check-reveal-nav');
+  const quick = document.getElementById('quick-check-content');
+  if (nav) nav.style.display = 'none';
+  if (quick) {
+    quick.style.display = 'block';
+    quick.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 };
 
 // Show section 1 on load — no scroll
@@ -1815,10 +1841,14 @@ window.updateCombinedChart = function() {
   const val = parseFloat(document.getElementById('slider-combined').value);
   document.getElementById('val-combined').textContent = val.toFixed(1) + ' dB SNR';
   const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, val);
-  document.getElementById('stat-comb-sens').textContent = (m.sens * 100).toFixed(1) + '%';
-  document.getElementById('stat-comb-spec').textContent = (m.spec * 100).toFixed(1) + '%';
+  const liveSens = document.getElementById('stat-comb-sens');
+  const liveSpec = document.getElementById('stat-comb-spec');
+  if (liveSens) liveSens.textContent = (m.sens * 100).toFixed(1) + '%';
+  if (liveSpec) liveSpec.textContent = (m.spec * 100).toFixed(1) + '%';
   // After Youden reveal, also update J display
   if (combinedYoudenRevealed) {
+    document.getElementById('stat-comb-sens-final').textContent = (m.sens * 100).toFixed(1) + '%';
+    document.getElementById('stat-comb-spec-final').textContent = (m.spec * 100).toFixed(1) + '%';
     document.getElementById('stat-comb-j').textContent = (m.sens + m.spec - 1).toFixed(3);
   }
   chartCombined.update('none');
@@ -1831,6 +1861,14 @@ window.lockInChoice = function() {
   // Keep slider active so they can keep exploring after the reveal
   document.getElementById('btn-lockin').disabled = true;
   document.getElementById('lockin-area').style.display = 'none';
+  const liveStats = document.getElementById('combined-live-stats');
+  if (liveStats) {
+    liveStats.innerHTML = `
+      <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" id="stat-comb-sens-final">—</div></div>
+      <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" id="stat-comb-spec-final">—</div></div>
+      <div class="stat-card"><span class="stat-label">Youden's J</span><div class="stat-value" id="stat-comb-j">—</div></div>
+    `;
+  }
 
   // Add Youden curve to chart
   const youdenData = [];
@@ -1860,10 +1898,11 @@ window.lockInChoice = function() {
   }
   banner.innerHTML = feedback;
 
-  // Fill final stats
-  document.getElementById('stat-comb-sens-final').textContent = (bestYoudenSens * 100).toFixed(1) + '%';
-  document.getElementById('stat-comb-spec-final').textContent = (bestYoudenSpec * 100).toFixed(1) + '%';
-  document.getElementById('stat-comb-j').textContent = bestYoudenJ.toFixed(3);
+  // Fill final stats for the user's current cut-off, then keep them live as the slider moves.
+  const currentM = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, userCo);
+  document.getElementById('stat-comb-sens-final').textContent = (currentM.sens * 100).toFixed(1) + '%';
+  document.getElementById('stat-comb-spec-final').textContent = (currentM.spec * 100).toFixed(1) + '%';
+  document.getElementById('stat-comb-j').textContent = (currentM.sens + currentM.spec - 1).toFixed(3);
 
   // Reveal
   document.getElementById('youden-reveal').style.display = 'block';
@@ -2098,16 +2137,10 @@ function onPageShow(pageNum) {
   switch(pageNum) {
     case 11: if (!chartScatter1) initScatter1(); break;
     case 12: if (!chartQuadrant) initQuadrantChart(); break;
-    case 13:
-      // Enable sens/spec stats on the quadrant chart (page 12)
-      const statsEl = document.getElementById('quad-sens-spec-stats');
-      if (statsEl) { statsEl.style.display = 'flex'; statsEl.classList.add('show-grid'); }
-      updateQuadrantChart();
-      break;
-    case 14: if (!chartSensExplore) initSensExploreChart(); break;
-    case 15: if (!chartSpecExplore) initSpecExploreChart(); break;
-    case 16: if (!chartCombined) initCombinedChart(); break;
-    case 17: if (!chartROC) initROCChart(); break;
+    case 13: if (!chartSensExplore) initSensExploreChart(); break;
+    case 14: if (!chartSpecExplore) initSpecExploreChart(); break;
+    case 15: if (!chartCombined) initCombinedChart(); break;
+    case 16: if (!chartROC) initROCChart(); break;
   }
 }
 
@@ -2604,7 +2637,7 @@ function parseAndDisplay(csvText, fileName, isSample) {
     : `🔴 <strong>REFER</strong> — ${Poss} SRT of ${srt.toFixed(1)} dB SNR is above the cut-off of ${srtCutoff.toFixed(1)} dB SNR. This suggests further hearing assessment may be warranted.`;
 
   // Adaptive track chart
-  initAdaptiveChart(trials, srt, poss);
+  initAdaptiveChart(trials, srt, poss, isSample ? fileName : "");
 
   // Final scatter chart
   initFinalScatter(popData, srt, srtCutoff, passed, poss);
@@ -2614,7 +2647,7 @@ function parseAndDisplay(csvText, fileName, isSample) {
   setTimeout(() => document.getElementById('results-area').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
 }
 
-function initAdaptiveChart(trials, srt, poss) {
+function initAdaptiveChart(trials, srt, poss, sampleLabel = "") {
   if (chartAdaptive) chartAdaptive.destroy();
 
   // Null trial: keep in track line, show as grey dot, exclude from correct/incorrect
@@ -2663,6 +2696,10 @@ function initAdaptiveChart(trials, srt, poss) {
         c.fillStyle = '#999';
         c.textAlign = 'center';
         c.fillText('excluded', (left + x7) / 2, top + 14);
+        if (sampleLabel) {
+          c.textAlign = 'right';
+          c.fillText(sampleLabel, chart.chartArea.right - 4, top + 14);
+        }
         c.restore();
       }
     }]
