@@ -984,12 +984,15 @@ body {
 
     <p>From these four groups we can calculate two key metrics:</p>
 
-    <table class="confusion-table">
+    <table class="confusion-table" aria-hidden="true">
       <tr><th></th><th colspan="2">Screening Test</th></tr>
       <tr><th></th><th>Refer</th><th>Pass</th></tr>
       <tr><th>Condition Present<br/>(4FA ≥ cut-off)</th><td class="cell-tp">Hit (TP)</td><td class="cell-fn">Miss (FN)</td></tr>
       <tr><th>Condition Absent<br/>(4FA &lt; cut-off)</th><td class="cell-fp">False Alarm (FP)</td><td class="cell-tn">Correct Reject (TN)</td></tr>
     </table>
+    <div class="sr-only">
+      <p>This is a two-by-two matrix that compares the outcome of a screening test with the person's true condition. The columns represent the screening result, which can be either "refer," meaning the test suggests a possible problem, or "pass," meaning the test suggests no problem. The rows represent the true condition based on the gold standard: in the top row, the condition is present, meaning the four-frequency average is at or above the cut-off, and in the bottom row, the condition is absent, meaning the four-frequency average is below the cut-off. In the top-left cell, where the condition is present and the test result is "refer," this is called a hit, or true positive. In the top-right cell, where the condition is present but the test result is "pass," this is a miss, or false negative. In the bottom-left cell, where the condition is absent but the test result is "refer," this is a false alarm, or false positive. Finally, in the bottom-right cell, where the condition is absent and the test result is "pass," this is a correct reject, or true negative.</p>
+    </div>
 
     <div class="def-box">
       <span class="def-term">Sensitivity = TP / (TP + FN) = <span id="formula-sens"></span></span><br/>
