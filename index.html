@@ -1392,6 +1392,7 @@ const DEFAULT_SRT_CUTOFF_MAORI = -9.5;
 /* Active language state */
 let activeLang = 'eng'; // 'eng' or 'mri'
 let testPassed = null; // null = not yet taken, true = pass, false = refer
+let isSampleData = false; // true when using sample/dummy data
 function getPopData() { return activeLang === 'mri' ? POP_DATA_MAORI : POP_DATA_NZENG; }
 function getSRTCutoff() { return activeLang === 'mri' ? DEFAULT_SRT_CUTOFF_MAORI : DEFAULT_SRT_CUTOFF_ENG; }
 
@@ -1433,9 +1434,9 @@ window.goBack = function() {
 };
 
 window.showWrapUp = function() {
-  // Show/hide the refer follow-up section based on test result
+  // Show refer follow-up only if it's their real data AND they got a refer
   const referEl = document.getElementById('refer-followup');
-  if (referEl) referEl.style.display = (testPassed === false) ? 'block' : 'none';
+  if (referEl) referEl.style.display = (testPassed === false && !isSampleData) ? 'block' : 'none';
   showPage(17, true);
 };
 
@@ -2014,10 +2015,30 @@ window.lockInChoice = function() {
   chartCombined.options.scales.y.min = -0.1;
   chartCombined.update();
 
-  // Build feedback
+  // Build feedback — for Māori data, recognise the plateau
   const banner = document.getElementById('youden-result-banner');
   let feedback;
-  if (diff <= 0.5) {
+  const userM = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, userCo);
+  const userJ = userM.sens + userM.spec - 1;
+
+  // Find the plateau: all cut-offs within 0.01 of the peak Youden value
+  let plateauLow = bestYoudenCo, plateauHigh = bestYoudenCo;
+  for (let co = -22; co <= 8; co += 0.1) {
+    const m = computeMetrics(getPopData(), DEFAULT_HL_CUTOFF, co);
+    const j = m.sens + m.spec - 1;
+    if (j >= bestYoudenJ - 0.01) {
+      plateauLow = Math.min(plateauLow, co);
+      plateauHigh = Math.max(plateauHigh, co);
+    }
+  }
+  const plateauWidth = plateauHigh - plateauLow;
+  const inPlateau = userCo >= plateauLow - 0.15 && userCo <= plateauHigh + 0.15;
+
+  if (plateauWidth > 1.0 && inPlateau) {
+    // Wide plateau (typical of Māori data) — student landed in the zone
+    feedback = `🎯 Well done! You chose ${userCo.toFixed(1)} dB SNR (J = ${userJ.toFixed(3)}). The Youden index is very similar across a range of cut-offs here, which is exactly why we had the freedom to choose −9.5 dB SNR for the test — prioritising sensitivity without meaningfully sacrificing the overall balance.`;
+    banner.className = 'result-banner pass';
+  } else if (diff <= 0.5) {
     feedback = `🎯 Excellent! You chose ${userCo.toFixed(1)} dB SNR — the Youden-optimal cut-off is ${bestYoudenCo.toFixed(1)} dB SNR. That's spot on!`;
     banner.className = 'result-banner pass';
   } else if (diff <= 2) {
@@ -2055,6 +2076,16 @@ function initROCChart() {
   rocHLCut = parseFloat(document.getElementById('slider-roc-hl').value);
   buildROCData(rocHLCut);
 
+  // For Māori, use the implemented cut-off (-9.5) as the reference point instead of Youden peak
+  if (activeLang === 'mri') {
+    const implCo = DEFAULT_SRT_CUTOFF_MAORI;
+    const implM = computeMetrics(getPopData(), rocHLCut, implCo);
+    rocBestCo = implCo;
+    rocBestSens = implM.sens;
+    rocBestSpec = implM.spec;
+    window._rocBestCo = implCo;
+  }
+
   const sliderEl = document.getElementById('slider-roc');
   sliderEl.value = rocBestCo;
   rocCurCo = rocBestCo;
@@ -2062,6 +2093,8 @@ function initROCChart() {
   rocCurSpec = rocBestSpec;
   document.getElementById('val-roc').textContent = rocBestCo.toFixed(1) + ' dB SNR';
   document.getElementById('val-roc-hl').textContent = rocHLCut + ' dB HL';
+
+  const diamondLabel = activeLang === 'mri' ? 'Implemented cut-off' : 'Youden optimum';
 
   const ctx = document.getElementById('chart-roc').getContext('2d');
   chartROC = new Chart(ctx, {
@@ -2076,7 +2109,7 @@ function initROCChart() {
           fill: true, pointRadius: 0, borderWidth: 2.5, tension: 0
         },
         {
-          label: 'Youden optimum',
+          label: diamondLabel,
           data: [{ x: 1 - rocBestSpec, y: rocBestSens }],
           backgroundColor: '#e67e22', borderColor: '#c0392b',
           pointRadius: 8, pointStyle: 'rectRot'
@@ -2133,7 +2166,8 @@ function initROCChart() {
 
           c.font = '12px DM Sans';
           c.fillStyle = '#2d8a4e';
-          c.fillText(`◆ Optimal: ${rocBestCo.toFixed(1)} dB SNR`, ox, oy + lh * 1.5);
+          const refLabel = activeLang === 'mri' ? 'Implemented' : 'Optimal';
+          c.fillText(`◆ ${refLabel}: ${rocBestCo.toFixed(1)} dB SNR`, ox, oy + lh * 1.5);
           c.fillText(`   Sens ${(rocBestSens * 100).toFixed(0)}%  Spec ${(rocBestSpec * 100).toFixed(0)}%  J = ${optJ}`, ox, oy + lh * 2.5);
 
           c.fillStyle = '#c0392b';
@@ -2183,6 +2217,9 @@ function buildROCData(hlCut) {
 function updateROCMobileStats() {
   const el = (id) => document.getElementById(id);
   if (el('stat-optimal-co-m')) {
+    // Update the label to say "Implemented" for Māori
+    const labelEl = el('stat-optimal-co-m').previousElementSibling;
+    if (labelEl) labelEl.textContent = activeLang === 'mri' ? 'Implemented' : 'Optimal';
     el('stat-optimal-co-m').textContent = rocBestCo.toFixed(1) + ' dB';
     el('stat-opt-sens-m').textContent = (rocBestSens * 100).toFixed(0) + '%';
     el('stat-opt-spec-m').textContent = (rocBestSpec * 100).toFixed(0) + '%';
@@ -2209,6 +2246,16 @@ window.rebuildROC = function() {
   document.getElementById('val-roc-hl').textContent = hlCut + ' dB HL';
   rocHLCut = hlCut;
   buildROCData(hlCut);
+
+  // For Māori, override with implemented cut-off
+  if (activeLang === 'mri') {
+    const implCo = DEFAULT_SRT_CUTOFF_MAORI;
+    const implM = computeMetrics(getPopData(), hlCut, implCo);
+    rocBestCo = implCo;
+    rocBestSens = implM.sens;
+    rocBestSpec = implM.spec;
+    window._rocBestCo = implCo;
+  }
 
   // Update chart datasets
   chartROC.data.datasets[0].data = window._rocCurve;
@@ -2714,6 +2761,7 @@ function parseAndDisplay(csvText, fileName, isSample) {
   // Pass/Refer
   const passed = srt <= srtCutoff;
   testPassed = passed;
+  isSampleData = isSample;
   const banner = document.getElementById('result-banner');
   banner.className = 'result-banner ' + (passed ? 'pass' : 'refer');
   banner.innerHTML = passed
