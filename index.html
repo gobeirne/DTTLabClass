@@ -1635,7 +1635,7 @@ window.vndToggleNoise = async function() {
       <div class="stats-row sens-spec-grid" id="quad-sens-spec-stats" style="display:none;">
         <div class="stat-card green"><span class="stat-label">Sensitivity</span><div class="stat-value" aria-live="polite" id="stat-sens-9b">—</div></div>
         <div class="stat-card blue"><span class="stat-label">Specificity</span><div class="stat-value" aria-live="polite" id="stat-spec-9b">—</div></div>
-        <div class="stat-card"><span class="stat-label">Accuracy</span><div class="stat-value" aria-live="polite" id="stat-acc-9b">—</div></div>
+        <div class="stat-card" style="display:none;"><span class="stat-label">Accuracy</span><div class="stat-value" aria-live="polite" id="stat-acc-9b">—</div></div>
       </div>
     </div>
 
@@ -1878,19 +1878,32 @@ window.vndToggleNoise = async function() {
       <p>(Replace <code>abc123</code> with your own usercode.)</p>
 
       <p>This will trigger the test to email your results to you, including a <code>.csv</code> file with all the trial-by-trial data.</p>
+	  <p style="color: red;"><strong>Note:</strong> If you don't enter the code correctly, you won't be able to analyse your own data!</p>
 
       <p>You can do the test in <strong>English</strong> or <strong>te reo Māori</strong> — the choice is yours. This test must be performed with headphones due to the antiphasic nature of the stimuli.</p>
 
       <div style="margin: 20px 0;">
-        <a href="https://nzhst.canterbury.ac.nz/" target="_blank" rel="noopener">
+        <a href="https://nzhst.canterbury.ac.nz/" target="_blank" rel="noopener" onclick="return showIDReminder();">
           <img src="NZHST_2026.png" alt="Aotearoa New Zealand Hearing Screening Test" style="width:100%; border-radius:var(--radius);"/>
         </a>
       </div>
 
       <div style="margin: 20px 0;">
-        <a href="https://nzhst.canterbury.ac.nz/" target="_blank" rel="noopener" class="btn btn-link" style="font-size:1.1rem; padding: 14px 32px;">
+        <a href="https://nzhst.canterbury.ac.nz/" target="_blank" rel="noopener" class="btn btn-link" style="font-size:1.1rem; padding: 14px 32px;" onclick="return showIDReminder();">
           🎧 Open the Aotearoa New Zealand Hearing Screening Test →
         </a>
+      </div>
+
+      <!-- ID Reminder Modal -->
+      <div id="id-reminder-modal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;" onclick="if(event.target===this)this.style.display='none';">
+        <div style="background:#fff; border-radius:12px; padding:28px 32px; max-width:480px; margin:20px; box-shadow:0 8px 32px rgba(0,0,0,0.3); text-align:center;">
+          <div style="font-size:1.5rem; margin-bottom:12px;">⚠️</div>
+          <p style="font-weight:700; font-size:1.05rem; margin-bottom:12px;">Remember to enter your ID!</p>
+          <p style="margin-bottom:8px;">When asked for your ID, you must enter:</p>
+          <div class="id-example" style="font-size:1rem; margin:12px auto;">PSYC209 abc123@uclive.ac.nz</div>
+          <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:20px;">(Replace <code>abc123</code> with your own usercode)</p>
+          <button class="btn btn-primary" onclick="document.getElementById('id-reminder-modal').style.display='none'; window.open('https://nzhst.canterbury.ac.nz/','_blank');" style="font-size:1rem; padding:12px 28px;">Got it — open the test →</button>
+        </div>
       </div>
 
       <p>Once you've completed the test and received your results email, come back here and upload your <code>.csv</code> file below.</p>
@@ -2191,12 +2204,30 @@ window.revealQuickCheckOnPage12 = function() {
 window.addEventListener('DOMContentLoaded', () => {
   const params = new URLSearchParams(window.location.search);
   const startPage = parseInt(params.get('page')) || 1;
+
+  // ?mic=n hides the voice recording demo
+  if (params.get('mic') === 'n') {
+    const reveal = document.getElementById('voice-noise-reveal');
+    if (reveal) reveal.remove();
+    // The noise-continue-btn just becomes the normal Continue
+    const noiseBtn = document.getElementById('noise-continue-btn');
+    if (noiseBtn) {
+      noiseBtn.setAttribute('onclick', 'revealNext(8)');
+    }
+  }
+
   showPage(startPage, false);
-  // Clean the URL so it doesn't say ?page=6 forever
-  if (params.has('page')) {
+  // Clean the URL
+  if (params.has('page') || params.has('mic')) {
     window.history.replaceState({}, '', window.location.pathname);
   }
 });
+
+/* ID reminder modal for NZHST link */
+window.showIDReminder = function() {
+  document.getElementById('id-reminder-modal').style.display = 'flex';
+  return false; // prevent the link from navigating
+};
 
 /* ===================================================================
    TONE PLAYBACK
